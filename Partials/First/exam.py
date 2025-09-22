@@ -96,7 +96,7 @@ CONFIG = {
         IrisNames.VIRGINICA,
     ],
     # Parámetros de evaluación
-    Keys.CV_FOLDS: 10,  # Número de folds para validación cruzada
+    Keys.CV_FOLDS: 20,  # Número de folds para validación cruzada
     Keys.BOOTSTRAP_ITERATIONS: 1000,  # Iteraciones para bootstrapping (robusto para análisis)
     Keys.KNN_K_RANGE: list(range(1, 31)),  # Rango de análisis
     #
