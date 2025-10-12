@@ -415,26 +415,25 @@ def _render_confusion_matrices_comparison(model_type):
     """
     from ui.utils.state_manager import get_data
 
-    _, y, _, data_info = get_data()
+    X, y, _, data_info = get_data()
     
     # Get class names
     class_names = data_info.get("classes") if data_info else None
 
-    # Get original and PCA confusion matrices
+    # Get original and PCA models/predictions
     if model_type == "svm":
-        # Get original model predictions
         original_model = st.session_state.svm.get("best_model")
-        pca_cm = st.session_state.pca.get("svm_pca_confusion_matrix")
+        pca_model = st.session_state.pca.get("svm_pca_model")
     else:
-        # Get original model predictions
         original_model = st.session_state.ann.get("best_model")
-        pca_cm = st.session_state.pca.get("ann_pca_confusion_matrix")
+        pca_model = st.session_state.pca.get("ann_pca_model")
 
-    # Calculate original confusion matrix
-    from ui.utils.state_manager import get_data
-    X, y, _, _ = get_data()
+    # Get predictions for original model
     y_pred_original = original_model.predict(X)
-    original_cm = confusion_matrix(y, y_pred_original)
+    
+    # Get predictions for PCA model
+    X_pca = st.session_state.pca["X_pca"]
+    y_pred_pca = pca_model.predict(X_pca)
 
     # Side-by-side confusion matrices
     col1, col2 = st.columns(2)
@@ -442,20 +441,20 @@ def _render_confusion_matrices_comparison(model_type):
     with col1:
         st.markdown("**Original Model**")
         fig_original = plot_confusion_matrix(
-            original_cm,
+            y,
+            y_pred_original,
             class_names,
             "Confusion Matrix (Original)",
-            figsize=(5, 4),
         )
         st.pyplot(fig_original)
 
     with col2:
         st.markdown("**PCA Model**")
         fig_pca = plot_confusion_matrix(
-            pca_cm,
+            y,
+            y_pred_pca,
             class_names,
             "Confusion Matrix (PCA)",
-            figsize=(5, 4),
         )
         st.pyplot(fig_pca)
 
