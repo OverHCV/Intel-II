@@ -69,7 +69,7 @@ def render_experiment_history(session_state_svm):
         st.metric("Best Accuracy", f"{best_acc:.4f}", f"Exp #{history[best_idx]['id']}")
 
     with col3:
-        if st.button("🗑️ Clear History", use_container_width=True):
+        if st.button("🗑️ Clear History", width="stretch"):
             session_state_svm["experiment_history"] = []
             clear_experiments_file("svm")  # Clear persisted file
             st.rerun()

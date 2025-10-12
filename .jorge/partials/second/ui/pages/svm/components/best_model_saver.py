@@ -55,7 +55,7 @@ def render_best_model_saver():
     with col_button:
         if st.button(
             f"💾 Save Best Model\n(Exp #{best_exp['id']})",
-            use_container_width=True,
+            width="stretch",
             type="primary",
             key="svm_save_best_model",
         ):

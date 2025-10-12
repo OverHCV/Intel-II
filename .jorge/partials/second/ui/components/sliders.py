@@ -2,8 +2,8 @@
 Slider and Selector Components - Interactive controls
 """
 
-from typing import Any, List, Union
-    
+from typing import Any, List
+
 import streamlit as st
 
 

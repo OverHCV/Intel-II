@@ -78,7 +78,7 @@ def render_model_configuration():
         st.divider()
 
         # Train button
-        if st.button("🚀 Train SVM", type="primary", use_container_width=True):
+        if st.button("🚀 Train SVM", type="primary", width="stretch"):
             _train_svm_model(kernel, C, gamma, degree)
 
 

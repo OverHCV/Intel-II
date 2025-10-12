@@ -5,6 +5,7 @@ Visualization Functions for ML Analysis
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from scipy import stats
 from settings.config import CONF, Keys
 from sklearn.metrics import confusion_matrix
 
@@ -295,6 +296,179 @@ def plot_correlation_heatmap(X, feature_names, title="Feature Correlation Matrix
 
     ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
 
+    plt.tight_layout()
+    return fig
+
+
+def plot_feature_distributions(
+    X, feature_names, feature_indices=None, title_prefix="Distribution"
+):
+    """
+    Plot distribution histograms with KDE overlay for multiple features
+
+    Args:
+        X: Feature matrix
+        feature_names: List of all feature names
+        feature_indices: List of indices to plot (default: first 4)
+        title_prefix: Prefix for subplot titles
+
+    Returns:
+        matplotlib Figure
+    """
+    if feature_indices is None:
+        # Select first 4 features by default
+        feature_indices = list(range(min(4, len(feature_names))))
+
+    n_features = len(feature_indices)
+    fig, axes = plt.subplots(1, n_features, figsize=(5 * n_features, 4))
+
+    # Handle single feature case
+    if n_features == 1:
+        axes = [axes]
+
+    for idx, (ax, feat_idx) in enumerate(zip(axes, feature_indices)):
+        data = X[:, feat_idx]
+        feature_name = feature_names[feat_idx]
+
+        # Histogram with KDE overlay
+        ax.hist(
+            data, bins=30, density=True, alpha=0.6, color="skyblue", edgecolor="black"
+        )
+
+        # KDE overlay
+        kde_x = np.linspace(data.min(), data.max(), 100)
+        kde = stats.gaussian_kde(data)
+        ax.plot(kde_x, kde(kde_x), "r-", linewidth=2, label="KDE")
+
+        # Normal distribution overlay for reference
+        mu, sigma = data.mean(), data.std()
+        normal_curve = stats.norm.pdf(kde_x, mu, sigma)
+        ax.plot(kde_x, normal_curve, "g--", linewidth=2, label="Normal", alpha=0.7)
+
+        # Styling
+        ax.set_title(f"{feature_name}", fontsize=11, fontweight="bold")
+        ax.set_xlabel("Value", fontsize=9)
+        ax.set_ylabel("Density", fontsize=9)
+        ax.legend(fontsize=8)
+        ax.grid(alpha=0.3, axis="y")
+
+        # Add statistics text
+        stats_text = f"μ={mu:.2f}\nσ={sigma:.2f}"
+        ax.text(
+            0.02,
+            0.98,
+            stats_text,
+            transform=ax.transAxes,
+            verticalalignment="top",
+            fontsize=8,
+            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+        )
+
+    plt.suptitle(f"{title_prefix} Analysis", fontsize=14, fontweight="bold", y=1.02)
+    plt.tight_layout()
+    return fig
+
+
+def plot_feature_boxplots(X, feature_names, y=None, title="Feature Box Plots"):
+    """
+    Plot box plots for all features to show distribution and outliers
+
+    Args:
+        X: Feature matrix
+        feature_names: List of feature names
+        y: Target labels (optional, for color coding)
+        title: Plot title
+
+    Returns:
+        matplotlib Figure
+    """
+    import pandas as pd
+
+    # Convert to DataFrame
+    if not isinstance(X, pd.DataFrame):
+        df = pd.DataFrame(X, columns=feature_names)
+    else:
+        df = X
+
+    n_features = len(feature_names)
+    fig, ax = plt.subplots(figsize=(max(12, n_features * 1.5), 6))
+
+    # Create box plot
+    bp = ax.boxplot(
+        [df[col] for col in feature_names],
+        labels=feature_names,
+        patch_artist=True,
+        showmeans=True,
+        meanprops=dict(marker="D", markerfacecolor="red", markersize=6),
+    )
+
+    # Color boxes with gradient
+    colors = plt.cm.viridis(np.linspace(0, 1, n_features))
+    for patch, color in zip(bp["boxes"], colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.6)
+
+    ax.set_title(title, fontsize=14, fontweight="bold", pad=15)
+    ax.set_ylabel("Scaled Value", fontsize=11)
+    ax.set_xlabel("Features", fontsize=11)
+    ax.grid(alpha=0.3, axis="y")
+
+    # Rotate x labels if too many
+    if n_features > 5:
+        plt.xticks(rotation=45, ha="right")
+
+    plt.tight_layout()
+    return fig
+
+
+def plot_qq_plots(X, feature_names, feature_indices=None):
+    """
+    Plot Q-Q plots to test normality of features
+
+    Args:
+        X: Feature matrix
+        feature_names: List of all feature names
+        feature_indices: List of indices to plot (default: first 4)
+
+    Returns:
+        matplotlib Figure
+    """
+    if feature_indices is None:
+        feature_indices = list(range(min(4, len(feature_names))))
+
+    n_features = len(feature_indices)
+    fig, axes = plt.subplots(1, n_features, figsize=(5 * n_features, 4))
+
+    if n_features == 1:
+        axes = [axes]
+
+    for idx, (ax, feat_idx) in enumerate(zip(axes, feature_indices)):
+        data = X[:, feat_idx]
+        feature_name = feature_names[feat_idx]
+
+        # Q-Q plot
+        stats.probplot(data, dist="norm", plot=ax)
+        ax.set_title(f"Q-Q: {feature_name}", fontsize=11, fontweight="bold")
+        ax.grid(alpha=0.3)
+
+        # Calculate and display Shapiro-Wilk test
+        stat, p_value = stats.shapiro(
+            data[: min(5000, len(data))]
+        )  # Limit for performance
+        normality = "Normal" if p_value > 0.05 else "Non-Normal"
+        color = "green" if p_value > 0.05 else "red"
+
+        ax.text(
+            0.05,
+            0.95,
+            f"{normality}\np={p_value:.4f}",
+            transform=ax.transAxes,
+            verticalalignment="top",
+            fontsize=9,
+            bbox=dict(boxstyle="round", facecolor=color, alpha=0.3),
+        )
+
+    plt.suptitle("Normality Test (Q-Q Plots)", fontsize=14, fontweight="bold", y=1.02)
     plt.tight_layout()
     return fig
 
