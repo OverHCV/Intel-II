@@ -12,12 +12,14 @@ from ui.pages.ann.experiments import get_best_experiment
 def render_best_model_saver(X, y, data_info):
     """
     Render best model saver with auto-identification
+    Shows whenever experiment history exists (even from previous sessions)
     
     Args:
         X: Feature matrix
         y: Target labels
         data_info: Dataset information dictionary
     """
+    # Show if ANY experiments exist (current or historical)
     history = st.session_state.ann.get("experiment_history", [])
 
     if not history:
