@@ -5,11 +5,18 @@ Centralized configuration for SVM, ANN, and PCA analysis
 Based on the Bank Marketing dataset from UCI ML Repository
 """
 
+from pathlib import Path
+
 from settings.feats import BankFeatures, BankTarget
 from settings.options import ANNActivation, ANNSolver, HandleCategorical, SVMKernel
 
 print("\nLibraries imported successfully")
 print("=" * 50)
+
+# Get the absolute path to the data directory
+# This works both locally and on Streamlit Cloud
+BASE_DIR = Path(__file__).resolve().parent.parent  # Go up to 'second' directory
+DATA_DIR = BASE_DIR / "data"
 
 
 # ===========================
@@ -83,8 +90,8 @@ CONF = {
     # ===========================
     # Dataset Configuration
     # ===========================
-    Keys.DATASET_PATH_FULL: "data/bank-full.csv",
-    Keys.DATASET_PATH_SMALL: "data/bank.csv",
+    Keys.DATASET_PATH_FULL: str(DATA_DIR / "bank-full.csv"),
+    Keys.DATASET_PATH_SMALL: str(DATA_DIR / "bank.csv"),
     Keys.DATASET_DELIMITER: ";",
     Keys.DATASET_ENCODING: "utf-8",
     # ===========================

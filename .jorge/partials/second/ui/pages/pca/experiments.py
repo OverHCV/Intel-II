@@ -8,6 +8,10 @@ from pathlib import Path
 
 import streamlit as st
 
+# Get absolute path to cache directory (works on Streamlit Cloud)
+CACHE_DIR = Path(__file__).resolve().parent.parent.parent.parent / ".cache"
+CACHE_FILE = CACHE_DIR / "pca_experiments.json"
+
 
 def save_pca_experiment():
     """
@@ -70,13 +74,11 @@ def save_pca_experiment():
 
 def load_pca_experiments():
     """Load PCA experiments from persistent storage"""
-    cache_file = Path(".cache/pca_experiments.json")
-
-    if not cache_file.exists():
+    if not CACHE_FILE.exists():
         return []
 
     try:
-        with open(cache_file, "r", encoding="utf-8") as f:
+        with open(CACHE_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, FileNotFoundError):
         return []
@@ -84,14 +86,11 @@ def load_pca_experiments():
 
 def _persist_experiments():
     """Persist experiments to cache file"""
-    cache_dir = Path(".cache")
-    cache_dir.mkdir(exist_ok=True)
-
-    cache_file = cache_dir / "pca_experiments.json"
+    CACHE_DIR.mkdir(exist_ok=True, parents=True)
 
     experiments = st.session_state.pca.get("experiment_history", [])
 
-    with open(cache_file, "w", encoding="utf-8") as f:
+    with open(CACHE_FILE, "w", encoding="utf-8") as f:
         json.dump(experiments, f, indent=2)
 
 
@@ -99,9 +98,8 @@ def clear_pca_experiments():
     """Clear PCA experiment history"""
     st.session_state.pca["experiment_history"] = []
     
-    cache_file = Path(".cache/pca_experiments.json")
-    if cache_file.exists():
-        cache_file.unlink()
+    if CACHE_FILE.exists():
+        CACHE_FILE.unlink()
 
 
 def render_experiment_history():
