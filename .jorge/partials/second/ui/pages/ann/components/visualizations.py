@@ -4,7 +4,7 @@ Side-by-side confusion matrix + metrics bar chart
 """
 
 import streamlit as st
-from funcs.visualizers import plot_confusion_matrix, plot_metrics_bars
+from funcs.visual.basic_visuals import plot_confusion_matrix, plot_metrics_bars
 
 
 def render_visualizations(X, y, data_info):

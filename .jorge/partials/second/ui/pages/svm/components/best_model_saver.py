@@ -14,10 +14,10 @@ def render_best_model_saver():
     """
     Render best model saver section
     Automatically identifies best experiment and allows saving for PCA comparison
+    Shows whenever experiment history exists (even from previous sessions)
     """
-    if not st.session_state.svm["is_trained"] or not st.session_state.svm.get(
-        "experiment_history"
-    ):
+    # Show if ANY experiments exist (current or historical)
+    if not st.session_state.svm.get("experiment_history"):
         return
 
     st.divider()

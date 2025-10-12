@@ -198,8 +198,8 @@ define a procedure or a lineal step of the process. Some examples below.
 **Purpose**: Clarify ambiguities BEFORE implementing
 
 ```
-ASK IN(current_context) OUT(user_decision): human {
-  question: "Where should AdminOnboardingData be stored?",
+ASK IN(this.context) OUT(user_decision): human {
+  "Where should AdminOnboardingData be stored?",
   options: [
     "1. Extend OnboardingData interface",
     "2. Create separate admin_onboarding table",
@@ -392,24 +392,24 @@ NAMESPACE_CHECK IN(@project_structure, new_identifier) OUT(collision_report): {
   identifier: "config",
   type: "file/module",
   searching_in: ["project_root/", "ui/", "ui/pages/"],
-  
+
   CHECK: {
     existing_files: grep -r "config.py" .,
     existing_imports: grep -r "from config import" .,
     existing_modules: grep -r "import config" .
   },
-  
+
   found_collisions: [
     "project_root/config.py",
     "Multiple imports from root config.py"
   ],
-  
+
   IF (collisions_found) THEN {
     alternative_names: ["conf.py", "page_config.py", "settings_page.py"],
     chosen: "conf.py",
     why: "Avoids collision with root config.py module"
   },
-  
+
   validates: "No namespace pollution, unique identifier"
 }
 ```
@@ -431,18 +431,18 @@ DEPENDENCY_TRACE IN(@created_file) OUT(dependent_list): {
     "from ui.pages import config",
     "import ui.pages.config"
   ],
-  
+
   found_dependents: [
     "ui/pages/__init__.py:3 → from .config import config_page"
   ],
-  
+
   IF (file_renamed_to: "conf.py") THEN {
     UPDATE_DEPENDENTS: [
       "ui/pages/__init__.py:3 → from .conf import config_page"
     ],
     validates: "All imports still resolve after rename"
   },
-  
+
   why: "Prevent broken imports during refactoring"
 }
 ```
