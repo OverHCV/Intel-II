@@ -53,6 +53,9 @@ def init_session_state():
 
     # ANN results
     if "ann" not in st.session_state:
+        # Load persisted experiment history
+        from funcs.persistence import load_experiments_from_file
+
         st.session_state.ann = {
             "model": None,
             "params": {},
@@ -60,6 +63,8 @@ def init_session_state():
             "is_trained": False,
             "best_model": None,
             "best_metrics": {},
+            "best_params": {},
+            "experiment_history": load_experiments_from_file("ann"),  # Load from disk
         }
 
     # PCA results

@@ -8,19 +8,20 @@
 2. **Nesting** - Any verb level can have inside another verbs (like JSON)
 3. **Named outputs** - reference objects across verbs (`OUT(object)` → `IN(object)`)
 4. **Two-file system** - `feature.plan.md` (context/header) + `feature.exec.md` (instructions/body)
-5. **Human + Agent friendly** - readable pseudocode that executes like a program
+5. **Human + Agent friendly** - readable pseudocode executable like a program
 
 ## Philosophy: Computer Architecture 🖥️
 
 This language treats you (agent) as a **computer's ALU (Arithmetic Logic Unit)**.
+
+AGENT (YOU) = ALU (First prepare context. Later  executes instructions)
 
 ### System Architecture:
 
 ```
 1. feature.plan.md = DATA MEMORY (Objectives, Context, Dependencies)
 2. feature.exec.md = INSTRUCTION MEMORY (Step-by-step operations to execute)
-3. AGENT (YOU) = ALU (Reason and executes instructions, gather data)
-4. STATUS_POINTER = INSTRUCTION POINTER (Simple counter: which line/objective is right now)
+4. STATUS_POINTER = INSTRUCTION POINTER (Simple counter: which line/objective is right now in execution)
 5. feature.analysis.md = FEEDBACK LOOP (Post-mortem, bugs found, lessons learned)
 ```
 
@@ -38,7 +39,7 @@ This way you can map what really needs to be done, get clarity with inputs/outpu
 
 ## File Structure (The 3 Memories)
 
-### 📋 PLANNING.md (Data Memory)
+### 📋 feature.plan.md (Data Memory)
 
 The "what" and "why" - high-level objectives and context
 
@@ -49,25 +50,45 @@ DEPENDENCIES [ ... ]
 ASK blocks for clarification
 ```
 
-### ⚙️ EXECUTION.md (Instruction Memory)
+Make dependencies as a mermaid chart for visual representation.
+
+Example:
+```mermaid
+graph TD
+    A[Task A] --> C[Task C]
+    C --> B[Task B]
+    C --> D[Task D]
+    D -.-> E[Task E]
+```
+
+### ⚙️ feature.exec.md (Instruction Memory)
 
 The "how" - detailed step-by-step operations (auto-generated during execution)
 
 ```
-IMPLEMENT obj["X"] {
+IMPLEMENT obj_key_name IN(@file_a.ext) {
   UNDERSTAND { ... }
   CREATE { ... }
   VALIDATE { ... }
-}
+} OUT(@file_a.ext, @file_b(object_name).ext)
 ```
 
-### 📊 ANALYSIS.md (Feedback Memory)
+### 📊 feature.analysis.md (Feedback Memory)
 
 The "what we learned" - post-mortem after completion to not fail again
 
 ```
 BUGS_FOUND [ ... ]
-PLANNING_GAPS [ ... ]
+PLANNING_GAPS [
+  HUMAN [
+    "make or say something": "becaues of X",
+    "did not understand": "becaues of Y",
+    "not know": "becaues of Z",
+    "did not know how to do": "becaues of A"
+  ]
+  AGENT_X 
+
+]
 LESSONS_LEARNED [ ... ]
 ```
 
