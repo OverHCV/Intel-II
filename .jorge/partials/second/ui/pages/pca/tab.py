@@ -3,7 +3,11 @@ PCA Page - Principal Component Analysis & Comparison
 """
 
 import streamlit as st
-from ui.pages.pca.components import render_pca_visualizations
+from ui.pages.pca.components import (
+    render_model_comparison,
+    render_overall_analysis,
+    render_pca_visualizations,
+)
 from ui.pages.pca.docs import render_pca_documentation
 from ui.utils.state_manager import get_data
 
@@ -28,9 +32,15 @@ def pca_page():
 
     st.divider()
 
-    # Visualizations (Feature Analysis & Data Exploration)
+    # Visualizations (Feature Analysis, Data Exploration & PCA Transformation)
     render_pca_visualizations()
 
-    # TODO: Add PCA transformation controls
-    # TODO: Add model comparison sections (SVM, ANN)
-    # TODO: Add overall analysis
+    st.divider()
+
+    # Model Comparison (SVM and ANN with PCA)
+    render_model_comparison()
+
+    st.divider()
+
+    # Overall Analysis & Conclusions
+    render_overall_analysis()

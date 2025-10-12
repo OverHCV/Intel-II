@@ -21,7 +21,7 @@ AGENT (YOU) = ALU (First prepare context. Later  executes instructions)
 ```
 1. feature.plan.md = DATA MEMORY (Objectives, Context, Dependencies)
 2. feature.exec.md = INSTRUCTION MEMORY (Step-by-step operations to execute)
-4. STATUS_POINTER = INSTRUCTION POINTER (Simple counter: which line/objective is right now in execution)
+4. POINTER = INSTRUCTION POINTER (Simple counter: which line/objective is right now in execution)
 5. feature.analysis.md = FEEDBACK LOOP (Post-mortem, bugs found, lessons learned)
 ```
 
@@ -33,7 +33,7 @@ AGENT (YOU) = ALU (First prepare context. Later  executes instructions)
 4. **Iterate until plan is crystal clear** (feature.exec.md also is iterated)
 5. **Executes when confirmed** (feature.exec.md is executed)
 6. **Bugs happen** (normal!) (Document in feature.analysis.md)
-8. **Closed feedback loop** (parlang-guide.md is updated based on the reflection made in feature.analysis.md)
+8. **Closed feedback loop** (parlang-guide.md is updated based on the abstracted reflection made in feature.analysis.md)
 
 This way you can map what really needs to be done, get clarity with inputs/outputs, and iterate before execution
 
@@ -44,9 +44,9 @@ This way you can map what really needs to be done, get clarity with inputs/outpu
 The "what" and "why" - high-level objectives and context
 
 ```
-CONTEXT { ... }
-OBJECTIVES as obj [ ... ]
-DEPENDENCIES [ ... ]
+SET context: { ... }
+SET objectives as obj: [ ... ]
+SET dependencies: [ ... ]
 ASK blocks for clarification
 ```
 

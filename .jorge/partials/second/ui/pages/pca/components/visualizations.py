@@ -153,10 +153,10 @@ def _render_feature_analysis_tab(X, y, feature_names, data_info):
 
 
 def _render_data_exploration_tab(X, y, feature_names, data_info):
-    """Render Data Exploration tab with both 2D and 3D scatter plots side by side"""
+    """Render Data Exploration tab with multiple predefined 2D and 3D plots"""
     st.markdown("### 🗺️ Interactive Data Exploration")
     st.markdown(
-        "Explore feature relationships with side-by-side 2D and 3D visualizations"
+        "Explore feature relationships with predefined comparisons"
     )
 
     # Get class names from data_info
@@ -165,84 +165,138 @@ def _render_data_exploration_tab(X, y, feature_names, data_info):
     else:
         class_names = None
 
-    # Two-column layout: 2D on left, 3D on right
-    col_2d, col_3d = st.columns(2)
+    n_features = len(feature_names)
 
-    # ========== 2D SCATTER PLOT ==========
-    with col_2d:
-        st.markdown("#### 📊 2D Scatter Plot")
+    # ========== ROW 1: THREE 2D SCATTER PLOTS ==========
+    st.markdown("#### 📊 2D Feature Comparisons")
+    
+    # Inline selectors (label and input on same row)
+    col_sel1, col_sel2, col_sel3 = st.columns(3)
+    
+    with col_sel1:
+        col_label1, col_input1 = st.columns([1, 2])
+        with col_label1:
+            st.markdown("**Plot 1:**")
+        with col_input1:
+            x1 = st.selectbox("X", feature_names, index=0, key="pca_2d_1_x", label_visibility="collapsed")
+            y1 = st.selectbox("Y", feature_names, index=min(1, n_features-1), key="pca_2d_1_y", label_visibility="collapsed")
+    
+    with col_sel2:
+        col_label2, col_input2 = st.columns([1, 2])
+        with col_label2:
+            st.markdown("**Plot 2:**")
+        with col_input2:
+            x2 = st.selectbox("X", feature_names, index=min(1, n_features-1), key="pca_2d_2_x", label_visibility="collapsed")
+            y2 = st.selectbox("Y", feature_names, index=min(2, n_features-1), key="pca_2d_2_y", label_visibility="collapsed")
+    
+    with col_sel3:
+        col_label3, col_input3 = st.columns([1, 2])
+        with col_label3:
+            st.markdown("**Plot 3:**")
+        with col_input3:
+            x3 = st.selectbox("X", feature_names, index=0, key="pca_2d_3_x", label_visibility="collapsed")
+            y3 = st.selectbox("Y", feature_names, index=min(2, n_features-1), key="pca_2d_3_y", label_visibility="collapsed")
 
-        # 2D Selectors (stacked vertically)
-        x_feature_2d = st.selectbox(
-            "X-Axis", feature_names, index=0, key="pca_scatter_2d_x"
+    # Render 2D plots
+    col_2d1, col_2d2, col_2d3 = st.columns(3)
+    
+    with col_2d1:
+        fig_2d1 = plot_interactive_scatter_2d(
+            X, y, feature_names, 
+            feature_names.index(x1), feature_names.index(y1), 
+            class_names, f"{x1} vs {y1}"
         )
-        y_feature_2d = st.selectbox(
-            "Y-Axis",
-            feature_names,
-            index=min(1, len(feature_names) - 1),
-            key="pca_scatter_2d_y",
+        st.pyplot(fig_2d1)
+    
+    with col_2d2:
+        fig_2d2 = plot_interactive_scatter_2d(
+            X, y, feature_names, 
+            feature_names.index(x2), feature_names.index(y2), 
+            class_names, f"{x2} vs {y2}"
         )
-
-        # Get indices
-        x_idx_2d = feature_names.index(x_feature_2d)
-        y_idx_2d = feature_names.index(y_feature_2d)
-
-        # Plot 2D
-        fig_2d = plot_interactive_scatter_2d(
-            X, y, feature_names, x_idx_2d, y_idx_2d, class_names, "2D Feature Space"
+        st.pyplot(fig_2d2)
+    
+    with col_2d3:
+        fig_2d3 = plot_interactive_scatter_2d(
+            X, y, feature_names, 
+            feature_names.index(x3), feature_names.index(y3), 
+            class_names, f"{x3} vs {y3}"
         )
-        st.pyplot(fig_2d)
-        st.caption("💡 **2D View:** Analyze relationships between two features")
+        st.pyplot(fig_2d3)
 
-    # ========== 3D SCATTER PLOT ==========
-    with col_3d:
-        st.markdown("#### 🎲 3D Scatter Plot")
+    st.caption("💡 **2D Views:** Compare different feature pairs to find separable patterns")
 
-        # 3D Selectors (stacked vertically)
-        x_feature_3d = st.selectbox(
-            "X-Axis", feature_names, index=0, key="pca_scatter_3d_x"
+    st.divider()
+
+    # ========== ROW 2: THREE 3D SCATTER PLOTS ==========
+    st.markdown("#### 🎲 3D Feature Comparisons")
+    
+    # Inline selectors for 3D plots
+    col_sel3d1, col_sel3d2, col_sel3d3 = st.columns(3)
+    
+    with col_sel3d1:
+        col_label3d1, col_input3d1 = st.columns([1, 2])
+        with col_label3d1:
+            st.markdown("**3D Plot 1:**")
+        with col_input3d1:
+            x3d1 = st.selectbox("X", feature_names, index=0, key="pca_3d_1_x", label_visibility="collapsed")
+            y3d1 = st.selectbox("Y", feature_names, index=min(1, n_features-1), key="pca_3d_1_y", label_visibility="collapsed")
+            z3d1 = st.selectbox("Z", feature_names, index=min(2, n_features-1), key="pca_3d_1_z", label_visibility="collapsed")
+    
+    with col_sel3d2:
+        col_label3d2, col_input3d2 = st.columns([1, 2])
+        with col_label3d2:
+            st.markdown("**3D Plot 2:**")
+        with col_input3d2:
+            x3d2 = st.selectbox("X", feature_names, index=min(1, n_features-1), key="pca_3d_2_x", label_visibility="collapsed")
+            y3d2 = st.selectbox("Y", feature_names, index=min(2, n_features-1), key="pca_3d_2_y", label_visibility="collapsed")
+            z3d2 = st.selectbox("Z", feature_names, index=min(3, n_features-1), key="pca_3d_2_z", label_visibility="collapsed")
+    
+    with col_sel3d3:
+        col_label3d3, col_input3d3 = st.columns([1, 2])
+        with col_label3d3:
+            st.markdown("**3D Plot 3:**")
+        with col_input3d3:
+            x3d3 = st.selectbox("X", feature_names, index=0, key="pca_3d_3_x", label_visibility="collapsed")
+            y3d3 = st.selectbox("Y", feature_names, index=min(2, n_features-1), key="pca_3d_3_y", label_visibility="collapsed")
+            z3d3 = st.selectbox("Z", feature_names, index=min(3, n_features-1), key="pca_3d_3_z", label_visibility="collapsed")
+
+    # Render 3D plots
+    col_3d1, col_3d2, col_3d3 = st.columns(3)
+    
+    with col_3d1:
+        fig_3d1 = plot_interactive_scatter_3d(
+            X, y, feature_names,
+            feature_names.index(x3d1), feature_names.index(y3d1), feature_names.index(z3d1),
+            class_names, f"{x3d1}-{y3d1}-{z3d1}"
         )
-        y_feature_3d = st.selectbox(
-            "Y-Axis",
-            feature_names,
-            index=min(1, len(feature_names) - 1),
-            key="pca_scatter_3d_y",
-        )
-        z_feature_3d = st.selectbox(
-            "Z-Axis",
-            feature_names,
-            index=min(2, len(feature_names) - 1),
-            key="pca_scatter_3d_z",
-        )
-
-        # Get indices
-        x_idx_3d = feature_names.index(x_feature_3d)
-        y_idx_3d = feature_names.index(y_feature_3d)
-        z_idx_3d = feature_names.index(z_feature_3d)
-
-        # Try plotly 3D first, fallback to matplotlib 2D
-        fig_3d = plot_interactive_scatter_3d(
-            X,
-            y,
-            feature_names,
-            x_idx_3d,
-            y_idx_3d,
-            z_idx_3d,
-            class_names,
-            "3D Feature Space",
-        )
-
-        if fig_3d is not None:
-            st.plotly_chart(fig_3d, width="stretch")
-            st.caption(
-                "💡 **3D View:** Drag to rotate, scroll to zoom, double-click to reset"
-            )
+        if fig_3d1 is not None:
+            st.plotly_chart(fig_3d1, use_container_width=True)
         else:
-            st.warning("⚠️ Plotly not available. Showing 2D fallback.")
-            fig_2d_fallback = plot_interactive_scatter_2d(
-                X, y, feature_names, x_idx_3d, y_idx_3d, class_names, "2D Fallback"
-            )
-            st.pyplot(fig_2d_fallback)
-            st.caption("💡 Install plotly for interactive 3D: `pip install plotly`")
+            st.warning("⚠️ Plotly not available")
+    
+    with col_3d2:
+        fig_3d2 = plot_interactive_scatter_3d(
+            X, y, feature_names,
+            feature_names.index(x3d2), feature_names.index(y3d2), feature_names.index(z3d2),
+            class_names, f"{x3d2}-{y3d2}-{z3d2}"
+        )
+        if fig_3d2 is not None:
+            st.plotly_chart(fig_3d2, use_container_width=True)
+        else:
+            st.warning("⚠️ Plotly not available")
+    
+    with col_3d3:
+        fig_3d3 = plot_interactive_scatter_3d(
+            X, y, feature_names,
+            feature_names.index(x3d3), feature_names.index(y3d3), feature_names.index(z3d3),
+            class_names, f"{x3d3}-{y3d3}-{z3d3}"
+        )
+        if fig_3d3 is not None:
+            st.plotly_chart(fig_3d3, use_container_width=True)
+        else:
+            st.warning("⚠️ Plotly not available")
+
+    st.caption("💡 **3D Views:** Drag to rotate, scroll to zoom, double-click to reset. Explore 3-feature relationships.")
 
 
