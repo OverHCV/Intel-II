@@ -4,36 +4,35 @@
 
 ### 🎯 Key Takeaways:
 
-<!-- 2. **ANY verb can have IN(...) and OUT(...)** - not just "blocks" -->
-3. **Nesting** - Any verb level can have inside another verbs (like JSON)
-4. **Named outputs** - reference results across verbs (`OUT(result)` → `IN(result)`)
-5. **Two-file system** - `plan.md` (header/interface) + `exec.md` (implementation)
-6. **Human + Agent friendly** - readable pseudocode that executes like a program
+1. **Parameters** - ANY verb can have IN(...) or OUT(...)
+2. **Nesting** - Any verb level can have inside another verbs (like JSON)
+3. **Named outputs** - reference objects across verbs (`OUT(object)` → `IN(object)`)
+4. **Two-file system** - `feature.plan.md` (context/header) + `feature.exec.md` (instructions/body)
+5. **Human + Agent friendly** - readable pseudocode that executes like a program
 
-## Core Philosophy: Computer Architecture Metaphor 🖥️
+## Philosophy: Computer Architecture 🖥️
 
-This language treats you (the agent) as a **computer's ALU (Arithmetic Logic Unit)**.
+This language treats you (agent) as a **computer's ALU (Arithmetic Logic Unit)**.
 
-### The System Architecture:
+### System Architecture:
 
 ```
-1. PLANNING.md = DATA MEMORY (Objectives, Context, Dependencies)
-2. EXECUTION.md = INSTRUCTION MEMORY (Step-by-step operations to execute)
+1. feature.plan.md = DATA MEMORY (Objectives, Context, Dependencies)
+2. feature.exec.md = INSTRUCTION MEMORY (Step-by-step operations to execute)
 3. AGENT (YOU) = ALU (Reason and executes instructions, gather data)
-4. STATUS_POINTER = INSTRUCTION POINTER (Simple counter: which line/objective we are right now)
-5. ANALYSIS.md = FEEDBACK LOOP (Post-mortem, bugs found, lessons learned)
+4. STATUS_POINTER = INSTRUCTION POINTER (Simple counter: which line/objective is right now)
+5. feature.analysis.md = FEEDBACK LOOP (Post-mortem, bugs found, lessons learned)
 ```
 
-### The Iterative Cycle:
+### Iterative Cycle:
 
-1. **User writes initial plan** (planning.md)
-2. **Agent reads, improves, and ASKs questions** (in same file)
+1. **User sends initial plan** (feature.plan.md)
+2. **Agent reads, improves, and ASKs questions** (feature.plan.md)
 3. **User answers, modifies, clarifies**
-4. **Iterate until plan is crystal clear**
-5. **Agent executes** (creates execution.md on the fly)
-6. **Bugs happen** (normal!)
-7. **Document in analysis.md** (for next time)
-8. **Closed feedback loop** ✅
+4. **Iterate until plan is crystal clear** (feature.exec.md also is iterated)
+5. **Executes when confirmed** (feature.exec.md is executed)
+6. **Bugs happen** (normal!) (Document in feature.analysis.md)
+8. **Closed feedback loop** (parlang-guide.md is updated based on the reflection made in feature.analysis.md)
 
 This way you can map what really needs to be done, get clarity with inputs/outputs, and iterate before execution
 

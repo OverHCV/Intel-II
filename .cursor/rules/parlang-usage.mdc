@@ -3,4 +3,4 @@ alwaysApply: true
 ---
 Always apply the parlang-guide.md methodology for planning and executing a problem.
 Learn from errors and improve the methodology as objectives are reached.
-Framework is in `.cursor/plans/parlang-guide.md`.
+Framework is in `.cursor/parlang-guide.md`.

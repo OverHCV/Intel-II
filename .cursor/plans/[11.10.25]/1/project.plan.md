@@ -122,11 +122,16 @@ why: "Already in config imports; familiar; works well with Streamlit"
 
 ui/ {
 app.py: "Main Streamlit entry point with tab navigation",
-components/: {     
-    # Like in react, I know is kinda different in streamlit but if possible make a tab component
-    # (so we can change the selected exercise), panels so one can be right, other in the left, a slider thing
-    # like the basic things you would make in react right? So yeah those below are usefull but kinda chunky in my opinion
-    # are like big blocks you arrive after created smaller component ones.
+components/: {
+
+# Like in react, I know is kinda different in streamlit but if possible make a tab component
+
+# (so we can change the selected exercise), panels so one can be right, other in the left, a slider thing
+
+# like the basic things you would make in react right? So yeah those below are usefull but kinda chunky in my opinion
+
+# are like big blocks you arrive after created smaller component ones.
+
 sidebar.py: "Shared sidebar components",
 metrics_display.py: "Reusable metric cards",
 model_controls.py: "Parameter sliders and selectors"
@@ -137,8 +142,8 @@ ann.py: "ANN interactive tab content",
 pca.py: "PCA interactive tab content"
 },
 utils/: {
-    data_loader.py: "Load and preprocess data", # Yeah, I think also a tab for general config or change data (small dataset/large dataset) would be nice, an extra first tab
-    state_manager.py: "Manage st.session_state"
+data_loader.py: "Load and preprocess data", # Yeah, I think also a tab for general config or change data (small dataset/large dataset) would be nice, an extra first tab
+state_manager.py: "Manage st.session_state"
 }
 },
 

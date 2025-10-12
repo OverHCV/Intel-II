@@ -5,8 +5,8 @@ Interactive UI for SVM, ANN, and PCA analysis
 
 import streamlit as st
 from settings.config import CONF, Keys
+from ui.components.sidebar import sidebar_render
 from ui.pages.ann.tab import ann_page
-from ui.pages.conf import config_page
 from ui.pages.pca.tab import pca_page
 from ui.pages.svm.tab import svm_page
 from ui.utils import init_session_state
@@ -16,39 +16,29 @@ st.set_page_config(
     page_title="Bank Marketing ML Analysis",
     page_icon="🏦",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # Initialize session state
 init_session_state()
 
-# Sidebar
+# Sidebar with Configuration
 with st.sidebar:
-    st.title("🏦 Bank Marketing ML Analysis")
-    st.markdown("### Interactive Exploration of Classification Models")
+    st.title("🏦 Bank Marketing")
+    st.markdown("**ML Analysis Dashboard**")
+
+    # Render all configuration controls
+    sidebar_render()
 
     st.divider()
-
-    # st.markdown("**Tasks:**")
-    # st.markdown("- 📊 **Config**: Setup & data")
-    # st.markdown("- 🔍 **SVM**: Support Vector Machine")
-    # st.markdown("- 🧠 **ANN**: Neural Network")
-    # st.markdown("- 📈 **PCA**: Dimensionality Reduction")
-
-    # st.divider()
 
     st.caption("Universidad de Caldas")
     st.caption("Sistemas Inteligentes II")
     st.caption(f"Random State: {CONF[Keys.RANDOM_STATE]}")
 
-# Main content area
-# st.markdown("# 🏦 Bank Marketing ML Analysis")
-# st.markdown("Interactive exploration of classification models")
-
-# Create tabs
-tab_config, tab_svm, tab_ann, tab_pca = st.tabs(
+# Main content area - Create tabs (removed Config tab)
+tab_svm, tab_ann, tab_pca = st.tabs(
     [
-        "⚙️ Config",
         "🔍 SVM",
         "🧠 ANN",
         "📈 PCA",
@@ -56,9 +46,6 @@ tab_config, tab_svm, tab_ann, tab_pca = st.tabs(
 )
 
 # Render tab content
-with tab_config:
-    config_page()
-
 with tab_svm:
     svm_page()
 
