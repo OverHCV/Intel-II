@@ -29,14 +29,6 @@ with st.sidebar:
 
     st.divider()
 
-    # st.markdown("**Tasks:**")
-    # st.markdown("- 📊 **Config**: Setup & data")
-    # st.markdown("- 🔍 **SVM**: Support Vector Machine")
-    # st.markdown("- 🧠 **ANN**: Neural Network")
-    # st.markdown("- 📈 **PCA**: Dimensionality Reduction")
-
-    # st.divider()
-
     st.caption("Universidad de Caldas")
     st.caption("Sistemas Inteligentes II")
     st.caption(f"Random State: {CONF[Keys.RANDOM_STATE]}")

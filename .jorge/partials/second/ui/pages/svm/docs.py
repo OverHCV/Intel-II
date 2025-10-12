@@ -8,7 +8,10 @@ import streamlit as st
 
 def render_svm_documentation():
     """Render expandable documentation about SVM and kernels"""
-    with st.expander("📚 **Theory & Documentation** - Click to learn about SVMs and Kernels", expanded=False):
+    with st.expander(
+        "📚 **Theory & Docs** - More about SVMs and Kernels",
+        expanded=False,
+    ):
         st.markdown("""
         ### 🎯 Why Support Vector Machines?
         
@@ -23,9 +26,9 @@ def render_svm_documentation():
         
         **Solution**: Map data to a **higher-dimensional space** where it becomes linearly separable:
         """)
-        
+
         st.latex(r"\phi: \mathbb{R}^n \rightarrow \mathbb{R}^m \text{ where } m > n")
-        
+
         st.markdown("""
         **Example**: Circular data in 2D (not linearly separable) → Map to 3D using φ(x₁, x₂) = [x₁², x₂², x₁x₂] → Now linearly separable!
         
@@ -39,9 +42,11 @@ def render_svm_documentation():
         
         Instead, we use a **kernel function** that computes the dot product in the mapped space directly:
         """)
-        
-        st.latex(r"k(\boldsymbol{a}, \boldsymbol{b}) = \phi(\boldsymbol{a})^T \phi(\boldsymbol{b})")
-        
+
+        st.latex(
+            r"k(\boldsymbol{a}, \boldsymbol{b}) = \phi(\boldsymbol{a})^T \phi(\boldsymbol{b})"
+        )
+
         st.markdown("""
         **Example**: Polynomial kernel k(a,b) = (aᵀb)² achieves the same result as explicitly mapping to polynomial space!
         
@@ -54,57 +59,65 @@ def render_svm_documentation():
         
         ### 🔧 Common Kernels
         """)
-        
+
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.markdown("""
             **1. Linear Kernel**
             """)
-            st.latex(r"k(\boldsymbol{x}, \boldsymbol{y}) = \boldsymbol{x}^T \boldsymbol{y}")
+            st.latex(
+                r"k(\boldsymbol{x}, \boldsymbol{y}) = \boldsymbol{x}^T \boldsymbol{y}"
+            )
             st.markdown("""
             - No mapping (original space)
             - **When to use**: Linearly separable data, high-dimensional data
             - **Pros**: Fast, no overfitting risk
             """)
-            
+
             st.markdown("""
             **2. Polynomial Kernel**
             """)
-            st.latex(r"k(\boldsymbol{x}, \boldsymbol{y}) = (\gamma \cdot \boldsymbol{x}^T \boldsymbol{y} + r)^d")
+            st.latex(
+                r"k(\boldsymbol{x}, \boldsymbol{y}) = (\gamma \cdot \boldsymbol{x}^T \boldsymbol{y} + r)^d"
+            )
             st.markdown("""
             - Maps to polynomial space of degree d
             - **When to use**: Data with polynomial relationships
             - **Warning**: High degree → overfitting risk
             """)
-        
+
         with col2:
             st.markdown("""
             **3. RBF (Gaussian) Kernel** ⭐ Most Popular
             """)
-            st.latex(r"k(\boldsymbol{x}, \boldsymbol{y}) = \exp\left(-\gamma \|\boldsymbol{x} - \boldsymbol{y}\|^2\right)")
+            st.latex(
+                r"k(\boldsymbol{x}, \boldsymbol{y}) = \exp\left(-\gamma \|\boldsymbol{x} - \boldsymbol{y}\|^2\right)"
+            )
             st.markdown("""
             - Maps to infinite dimensional space!
             - **When to use**: Default choice, works for most problems
             - **Pros**: Very flexible, handles complex boundaries
             """)
-            
+
             st.markdown("""
             **4. Sigmoid Kernel**
             """)
-            st.latex(r"k(\boldsymbol{x}, \boldsymbol{y}) = \tanh(\gamma \cdot \boldsymbol{x}^T \boldsymbol{y} + r)")
+            st.latex(
+                r"k(\boldsymbol{x}, \boldsymbol{y}) = \tanh(\gamma \cdot \boldsymbol{x}^T \boldsymbol{y} + r)"
+            )
             st.markdown("""
             - Neural network-like behavior
             - **When to use**: Specific applications
             - **Note**: Not always positive definite
             """)
-        
+
         st.markdown("""
         ---
         
         ### ⚙️ Parameter Guide
         """)
-        
+
         st.markdown("""
         **C (Regularization Parameter)**
         - **Controls**: Trade-off between margin size and classification errors
@@ -136,7 +149,7 @@ def render_svm_documentation():
         
         SVMs solve an optimization problem to find the best separating hyperplane:
         """)
-        
+
         st.latex(r"""
         \begin{aligned}
         \text{minimize} \quad & \sum_{i=1}^N \lambda_i - \frac{1}{2}\sum_{i,j}^N \lambda_i \lambda_j y_i y_j \, k(\boldsymbol{x}_i, \boldsymbol{x}_j) \\
@@ -144,7 +157,7 @@ def render_svm_documentation():
         & 0 \leq \lambda_i \leq C
         \end{aligned}
         """)
-        
+
         st.markdown("""
         Where:
         - λᵢ are Lagrange multipliers (one per training sample)
@@ -154,9 +167,11 @@ def render_svm_documentation():
         
         **Prediction** for a new sample **x**:
         """)
-        
-        st.latex(r"f(\boldsymbol{x}) = \text{sign}\left(\sum_{i=1}^N \lambda_i y_i \, k(\boldsymbol{x}_i, \boldsymbol{x}) + b\right)")
-        
+
+        st.latex(
+            r"f(\boldsymbol{x}) = \text{sign}\left(\sum_{i=1}^N \lambda_i y_i \, k(\boldsymbol{x}_i, \boldsymbol{x}) + b\right)"
+        )
+
         st.markdown("""
         ---
         
@@ -179,4 +194,3 @@ def render_svm_documentation():
         - Task: Test different kernels and parameters with cross-validation
         - Goal: Find best configuration and analyze WHY it works
         """)
-

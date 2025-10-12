@@ -3,8 +3,8 @@ Visualization Functions for ML Analysis
 """
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+import seaborn as sns
 from settings.config import CONF, Keys
 from sklearn.metrics import confusion_matrix
 
@@ -12,20 +12,20 @@ from sklearn.metrics import confusion_matrix
 def plot_confusion_matrix(y_true, y_pred, labels=None, title="Confusion Matrix"):
     """
     Plot confusion matrix heatmap
-    
+
     Args:
         y_true: True labels
         y_pred: Predicted labels
         labels: Class labels
         title: Plot title
-    
+
     Returns:
         matplotlib Figure
     """
     cm = confusion_matrix(y_true, y_pred)
-    
+
     fig, ax = plt.subplots(figsize=CONF[Keys.FIGURE_SIZE_SMALL])
-    
+
     sns.heatmap(
         cm,
         annot=True,
@@ -35,11 +35,11 @@ def plot_confusion_matrix(y_true, y_pred, labels=None, title="Confusion Matrix")
         yticklabels=labels if labels else ["Class 0", "Class 1"],
         ax=ax,
     )
-    
+
     ax.set_title(title)
     ax.set_ylabel("True Label")
     ax.set_xlabel("Predicted Label")
-    
+
     plt.tight_layout()
     return fig
 
@@ -47,26 +47,30 @@ def plot_confusion_matrix(y_true, y_pred, labels=None, title="Confusion Matrix")
 def plot_metrics_bars(metrics: dict, title="Model Performance"):
     """
     Plot metrics as bar chart
-    
+
     Args:
         metrics: Dictionary of metric_name: value
         title: Plot title
-    
+
     Returns:
         matplotlib Figure
     """
     fig, ax = plt.subplots(figsize=CONF[Keys.FIGURE_SIZE_SMALL])
-    
+
     metric_names = list(metrics.keys())
     metric_values = list(metrics.values())
-    
-    bars = ax.bar(metric_names, metric_values, color=plt.cm.viridis(np.linspace(0, 1, len(metric_names))))
-    
+
+    bars = ax.bar(
+        metric_names,
+        metric_values,
+        color=plt.cm.viridis(np.linspace(0, 1, len(metric_names))),
+    )
+
     ax.set_title(title)
     ax.set_ylabel("Score")
     ax.set_ylim(0, 1)
     ax.grid(alpha=CONF[Keys.GRID_ALPHA], axis="y")
-    
+
     # Add value labels on bars
     for bar in bars:
         height = bar.get_height()
@@ -77,7 +81,7 @@ def plot_metrics_bars(metrics: dict, title="Model Performance"):
             ha="center",
             va="bottom",
         )
-    
+
     plt.tight_layout()
     return fig
 
@@ -85,26 +89,26 @@ def plot_metrics_bars(metrics: dict, title="Model Performance"):
 def plot_pca_variance(pca_object, title="PCA Explained Variance"):
     """
     Plot cumulative explained variance by PCA components
-    
+
     Args:
         pca_object: Fitted PCA object
         title: Plot title
-    
+
     Returns:
         matplotlib Figure
     """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=CONF[Keys.FIGURE_SIZE_MEDIUM])
-    
+
     n_components = len(pca_object.explained_variance_ratio_)
     components = range(1, n_components + 1)
-    
+
     # Individual variance
     ax1.bar(components, pca_object.explained_variance_ratio_)
     ax1.set_xlabel("Component")
     ax1.set_ylabel("Explained Variance Ratio")
     ax1.set_title("Individual Variance")
     ax1.grid(alpha=CONF[Keys.GRID_ALPHA], axis="y")
-    
+
     # Cumulative variance
     cumulative_variance = np.cumsum(pca_object.explained_variance_ratio_)
     ax2.plot(components, cumulative_variance, marker="o")
@@ -119,38 +123,36 @@ def plot_pca_variance(pca_object, title="PCA Explained Variance"):
     ax2.set_title("Cumulative Variance")
     ax2.legend()
     ax2.grid(alpha=CONF[Keys.GRID_ALPHA])
-    
+
     plt.suptitle(title)
     plt.tight_layout()
     return fig
 
 
-def plot_learning_curve(
-    train_scores, val_scores, param_range, param_name="Parameter"
-):
+def plot_learning_curve(train_scores, val_scores, param_range, param_name="Parameter"):
     """
     Plot learning curve showing train/validation scores vs parameter
-    
+
     Args:
         train_scores: Training scores
         val_scores: Validation scores
         param_range: Parameter values
         param_name: Name of parameter being varied
-    
+
     Returns:
         matplotlib Figure
     """
     fig, ax = plt.subplots(figsize=CONF[Keys.FIGURE_SIZE_SMALL])
-    
+
     ax.plot(param_range, train_scores, marker="o", label="Training Score")
     ax.plot(param_range, val_scores, marker="s", label="Validation Score")
-    
+
     ax.set_xlabel(param_name)
     ax.set_ylabel("Score")
     ax.set_title(f"Learning Curve - {param_name}")
     ax.legend()
     ax.grid(alpha=CONF[Keys.GRID_ALPHA])
-    
+
     plt.tight_layout()
     return fig
 
@@ -162,27 +164,27 @@ def plot_comparison(
 ):
     """
     Plot side-by-side comparison of metrics before and after PCA
-    
+
     Args:
         original_metrics: Metrics from original features
         pca_metrics: Metrics after PCA transformation
         title: Plot title
-    
+
     Returns:
         matplotlib Figure
     """
     fig, ax = plt.subplots(figsize=CONF[Keys.FIGURE_SIZE_MEDIUM])
-    
+
     metric_names = list(original_metrics.keys())
     original_values = list(original_metrics.values())
     pca_values = list(pca_metrics.values())
-    
+
     x = np.arange(len(metric_names))
     width = 0.35
-    
+
     ax.bar(x - width / 2, original_values, width, label="Original", alpha=0.8)
     ax.bar(x + width / 2, pca_values, width, label="PCA", alpha=0.8)
-    
+
     ax.set_ylabel("Score")
     ax.set_title(title)
     ax.set_xticks(x)
@@ -190,13 +192,13 @@ def plot_comparison(
     ax.legend()
     ax.grid(alpha=CONF[Keys.GRID_ALPHA], axis="y")
     ax.set_ylim(0, 1)
-    
+
     # Add value labels
     for i, v in enumerate(original_values):
         ax.text(i - width / 2, v, f"{v:.3f}", ha="center", va="bottom", fontsize=8)
     for i, v in enumerate(pca_values):
         ax.text(i + width / 2, v, f"{v:.3f}", ha="center", va="bottom", fontsize=8)
-    
+
     plt.tight_layout()
     return fig
 
@@ -204,44 +206,231 @@ def plot_comparison(
 def plot_decision_boundary_2d(X, y, model, title="Decision Boundary"):
     """
     Plot 2D decision boundary (for PCA with 2 components)
-    
+
     Args:
         X: Feature matrix (2D)
         y: Target labels
         model: Trained classifier
         title: Plot title
-    
+
     Returns:
         matplotlib Figure
     """
     if X.shape[1] != 2:
         raise ValueError("X must have exactly 2 features for 2D plot")
-    
+
     fig, ax = plt.subplots(figsize=CONF[Keys.FIGURE_SIZE_SMALL])
-    
+
     # Create mesh
     h = 0.02  # Step size in mesh
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
     y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-    
+
     # Predict on mesh
     Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
-    
+
     # Plot decision boundary
     ax.contourf(xx, yy, Z, alpha=0.3, cmap=plt.cm.RdYlBu)
-    
+
     # Plot data points
     scatter = ax.scatter(
         X[:, 0], X[:, 1], c=y, cmap=plt.cm.RdYlBu, edgecolors="k", s=50
     )
-    
+
     ax.set_xlabel("First Component")
     ax.set_ylabel("Second Component")
     ax.set_title(title)
     plt.colorbar(scatter, ax=ax)
-    
+
     plt.tight_layout()
     return fig
 
+
+def plot_correlation_heatmap(X, feature_names, title="Feature Correlation Matrix"):
+    """
+    Plot correlation heatmap between features
+
+    Args:
+        X: Feature matrix (numpy array or DataFrame)
+        feature_names: List of feature names
+        title: Plot title
+
+    Returns:
+        matplotlib Figure
+    """
+    import pandas as pd
+
+    # Convert to DataFrame if needed
+    if not isinstance(X, pd.DataFrame):
+        df = pd.DataFrame(X, columns=feature_names)
+    else:
+        df = X
+
+    # Calculate correlation matrix
+    corr_matrix = df.corr()
+
+    # Create figure
+    fig, ax = plt.subplots(figsize=CONF[Keys.FIGURE_SIZE_MEDIUM])
+
+    # Create mask for upper triangle (optional - shows only lower half)
+    mask = np.triu(np.ones_like(corr_matrix, dtype=bool), k=1)
+
+    # Plot heatmap
+    sns.heatmap(
+        corr_matrix,
+        mask=mask,
+        annot=True,
+        fmt=".2f",
+        cmap="RdBu_r",  # Diverging colormap: red=negative, blue=positive
+        center=0,
+        vmin=-1,
+        vmax=1,
+        square=True,
+        linewidths=0.5,
+        cbar_kws={"shrink": 0.8, "label": "Correlation Coefficient"},
+        ax=ax,
+    )
+
+    ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
+
+    plt.tight_layout()
+    return fig
+
+
+def plot_interactive_scatter_2d(
+    X,
+    y,
+    feature_names,
+    x_idx=0,
+    y_idx=1,
+    class_names=None,
+    title="Feature Scatter Plot",
+):
+    """
+    Plot 2D scatter plot with two selected features
+
+    Args:
+        X: Feature matrix
+        y: Target labels
+        feature_names: List of feature names
+        x_idx: Index of feature for X axis
+        y_idx: Index of feature for Y axis
+        class_names: List of class names
+        title: Plot title
+
+    Returns:
+        matplotlib Figure
+    """
+    fig, ax = plt.subplots(figsize=CONF[Keys.FIGURE_SIZE_SMALL])
+
+    # Get unique classes
+    unique_classes = np.unique(y)
+
+    # Use class names if provided, otherwise use class numbers
+    if class_names is None:
+        class_names = [f"Class {int(c)}" for c in unique_classes]
+
+    # Create scatter plot for each class
+    colors = plt.cm.viridis(np.linspace(0, 1, len(unique_classes)))
+
+    for idx, class_val in enumerate(unique_classes):
+        mask = y == class_val
+        ax.scatter(
+            X[mask, x_idx],
+            X[mask, y_idx],
+            c=[colors[idx]],
+            label=class_names[idx],
+            alpha=0.6,
+            s=50,
+            edgecolors="k",
+            linewidth=0.5,
+        )
+
+    ax.set_xlabel(feature_names[x_idx], fontsize=12)
+    ax.set_ylabel(feature_names[y_idx], fontsize=12)
+    ax.set_title(title, fontsize=14, fontweight="bold")
+    ax.legend(loc="best")
+    ax.grid(alpha=CONF[Keys.GRID_ALPHA])
+
+    plt.tight_layout()
+    return fig
+
+
+def plot_interactive_scatter_3d(
+    X,
+    y,
+    feature_names,
+    x_idx=0,
+    y_idx=1,
+    z_idx=2,
+    class_names=None,
+    title="3D Feature Scatter Plot",
+):
+    """
+    Plot 3D scatter plot with three selected features using plotly
+
+    Args:
+        X: Feature matrix
+        y: Target labels
+        feature_names: List of feature names
+        x_idx: Index of feature for X axis
+        y_idx: Index of feature for Y axis
+        z_idx: Index of feature for Z axis
+        class_names: List of class names
+        title: Plot title
+
+    Returns:
+        plotly Figure or None if plotly not available
+    """
+    try:
+        import plotly.graph_objects as go
+
+        # Get unique classes
+        unique_classes = np.unique(y)
+
+        # Use class names if provided
+        if class_names is None:
+            class_names = [f"Class {int(c)}" for c in unique_classes]
+
+        # Create traces for each class
+        traces = []
+        colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
+
+        for idx, class_val in enumerate(unique_classes):
+            mask = y == class_val
+            trace = go.Scatter3d(
+                x=X[mask, x_idx],
+                y=X[mask, y_idx],
+                z=X[mask, z_idx],
+                mode="markers",
+                name=class_names[idx],
+                marker=dict(
+                    size=5,
+                    color=colors[idx % len(colors)],
+                    opacity=0.7,
+                    line=dict(color="white", width=0.5),
+                ),
+            )
+            traces.append(trace)
+
+        # Create layout
+        layout = go.Layout(
+            title=title,
+            scene=dict(
+                xaxis_title=feature_names[x_idx],
+                yaxis_title=feature_names[y_idx],
+                zaxis_title=feature_names[z_idx],
+            ),
+            template="plotly_white",
+            showlegend=True,
+            legend=dict(x=0.7, y=0.9),
+        )
+
+        fig = go.Figure(data=traces, layout=layout)
+        return fig
+
+    except ImportError:
+        print("Warning: plotly not available, falling back to 2D plot")
+        return None

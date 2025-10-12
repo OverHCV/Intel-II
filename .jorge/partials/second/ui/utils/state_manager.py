@@ -37,6 +37,9 @@ def init_session_state():
 
     # SVM results
     if "svm" not in st.session_state:
+        # Load persisted experiment history
+        from funcs.persistence import load_experiments_from_file
+
         st.session_state.svm = {
             "model": None,
             "params": {},
@@ -44,6 +47,8 @@ def init_session_state():
             "is_trained": False,
             "best_model": None,
             "best_metrics": {},
+            "best_params": {},
+            "experiment_history": load_experiments_from_file("svm"),  # Load from disk
         }
 
     # ANN results
