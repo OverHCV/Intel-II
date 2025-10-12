@@ -415,6 +415,17 @@ Following ParLang methodology and dependency chain from plan:
 - [x] Button now works correctly
 - ✅ FIXED
 
+**12:40 - DOCUMENTATION IMPROVEMENT: Added WHY Explanations**
+- [x] Rewrote docs.py with WHY behind every concept
+- [x] Added concrete examples with actual numbers
+- [x] Explained variable dimensions and why they matter
+- [x] Added expandable "Click to see example" sections
+- [x] Showed problems and solutions (vanishing gradient, etc)
+- [x] Explained when/why to use each activation/solver
+- [x] Much more educational and comprehensive
+- [x] Now 530 lines (was 286) - doubled with explanations!
+- ✅ IMPROVED
+
 ---
 
 ## NOTES

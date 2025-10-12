@@ -55,9 +55,10 @@ Make dependencies as a mermaid chart for visual representation.
 Example:
 ```mermaid
 graph TD
-    A[Task 1] --> B[Task 2]
-    B --> C[Task 3]
-    C --> D[Task 4]
+    A[Task A] --> C[Task C]
+    C --> B[Task B]
+    C --> D[Task D]
+    D -.-> E[Task E]
 ```
 
 ### ⚙️ feature.exec.md (Instruction Memory)
