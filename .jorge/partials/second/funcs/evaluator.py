@@ -100,7 +100,7 @@ def kfold_cross_validation(
         )
 
         print(
-            f"  FOLD {fold + 1:2d}: Acc={fold_accuracy:.4f}, PREC={fold_precision:.4f}, REC={fold_recall:.4f}, F1={fold_f1:.4f}"
+            f"  FOLD {fold + 1:2d}: ACC={fold_accuracy:.4f}, PREC={fold_precision:.4f}, REC={fold_recall:.4f}, F1={fold_f1:.4f}"
         )
 
     # Calcular estadísticas agregadas
