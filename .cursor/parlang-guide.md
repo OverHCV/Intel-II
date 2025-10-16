@@ -54,7 +54,7 @@ Make dependencies as a mermaid chart for visual representation.
 
 Example:
 ```mermaid
-graph TD
+graph LR
     A[Task A] --> C[Task C]
     C --> B[Task B]
     C --> D[Task D]
