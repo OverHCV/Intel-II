@@ -227,3 +227,4 @@ def render_scree_plot(explained_var):
             f"🤖 **Auto-detected elbow**: Around PC{elbow_idx} (largest drop: {-drops[elbow_idx - 1]:.1f}%)"
         )
 
+

@@ -20,7 +20,7 @@ from ui.utils.state_manager import get_config, get_data
 def render_model_configuration(X, y, data_info):
     """
     Render model configuration panel with training logic
-    
+
     Args:
         X: Feature matrix
         y: Target labels
@@ -86,7 +86,7 @@ def render_model_configuration(X, y, data_info):
 def _train_ann_model(X, y, architecture, activation, solver, max_iter, data_info):
     """
     Train ANN model with given parameters
-    
+
     Args:
         X: Feature matrix
         y: Target labels
@@ -179,15 +179,25 @@ def _train_ann_model(X, y, architecture, activation, solver, max_iter, data_info
         st.session_state.ann["is_trained"] = True
 
         # Save to experiment history
-        _save_to_history(architecture, activation, solver, max_iter, metrics, training_time, cv_strategy)
+        _save_to_history(
+            architecture,
+            activation,
+            solver,
+            max_iter,
+            metrics,
+            training_time,
+            cv_strategy,
+        )
 
         st.success(f"✅ Training complete! ({training_time:.2f}s)")
 
 
-def _save_to_history(architecture, activation, solver, max_iter, metrics, training_time, cv_strategy):
+def _save_to_history(
+    architecture, activation, solver, max_iter, metrics, training_time, cv_strategy
+):
     """
     Save experiment to history with persistence
-    
+
     Args:
         architecture: Network architecture tuple
         activation: Activation function
@@ -218,4 +228,3 @@ def _save_to_history(architecture, activation, solver, max_iter, metrics, traini
 
     # Save to disk (persistent)
     save_experiments_to_file(history, "ann")
-

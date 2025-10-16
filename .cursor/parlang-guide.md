@@ -294,7 +294,7 @@ SCHEMA_CHECK IN(@types/onboarding.ts, @supabase/types, @onboardingStorage.ts) OU
     CRITICAL: true,
     why: "Save operation will fail - removed fields are required in database"
   },
-  
+
   IF (MISMATCH_DETECTED.CRITICAL) THEN {
     ASK: user {
       question: "Schema mismatch: TypeScript removed fields that database requires. How to handle?",
