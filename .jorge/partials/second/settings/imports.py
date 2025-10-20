@@ -34,7 +34,12 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
-from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
+from sklearn.model_selection import (
+    GridSearchCV,
+    cross_val_predict,
+    cross_val_score,
+    train_test_split,
+)
 
 # Sklearn - Classifiers
 from sklearn.naive_bayes import GaussianNB

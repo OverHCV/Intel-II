@@ -69,7 +69,7 @@ def render_model_configuration(X, y, data_info):
     max_iter = st.slider(
         "Max Iterations",
         min_value=100,
-        max_value=2000,
+        max_value=10_000,
         value=CONF[Keys.ANN_MAX_ITER],
         step=100,
         key="ann_max_iter",

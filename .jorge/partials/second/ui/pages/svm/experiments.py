@@ -64,9 +64,9 @@ def render_experiment_history(session_state_svm):
         st.metric("Total Experiments", len(history))
 
     with col2:
-        # Find best experiment
-        best_idx, best_acc = _find_best_experiment(history)
-        st.metric("Best Accuracy", f"{best_acc:.4f}", f"Exp #{history[best_idx]['id']}")
+        # Find best experiment (using F1-Score for imbalanced data)
+        best_idx, best_score, metric_name = _find_best_experiment(history)
+        st.metric(f"Best {metric_name}", f"{best_score:.4f}", f"Exp #{history[best_idx]['id']}")
 
     with col3:
         if st.button("🗑️ Clear History", width="stretch"):
@@ -81,29 +81,35 @@ def render_experiment_history(session_state_svm):
 
 def _find_best_experiment(history):
     """
-    Find the experiment with the best accuracy
-
+    Find the experiment with the best F1-Score (better for imbalanced data)
+    Falls back to accuracy if F1 not available
+    
     Returns:
-        tuple: (best_index, best_accuracy)
+        tuple: (best_index, best_score, metric_name)
     """
     if not history:
-        return None, None
+        return None, None, None
 
-    if "CV Accuracy" in history[0]["metrics"]:
-        best_idx = max(
-            range(len(history)), key=lambda i: history[i]["metrics"]["CV Accuracy"]
-        )
-        best_acc = history[best_idx]["metrics"]["CV Accuracy"]
-    elif "Accuracy" in history[0]["metrics"]:
-        best_idx = max(
-            range(len(history)), key=lambda i: history[i]["metrics"]["Accuracy"]
-        )
-        best_acc = history[best_idx]["metrics"]["Accuracy"]
-    else:
-        best_idx = 0
-        best_acc = 0
+    def get_best_metric(exp):
+        """
+        Get best evaluation metric - prioritizes F1-Score for imbalanced data
+        Falls back to accuracy if F1 not available
+        """
+        metrics = exp["metrics"]
+        
+        # Prioritize F1-Score (better for imbalanced datasets)
+        f1 = metrics.get("CV F1-Score", metrics.get("F1-Score", None))
+        if f1 is not None and f1 > 0:
+            return f1, "F1-Score"
+        
+        # Fallback to accuracy
+        acc = metrics.get("CV Accuracy", metrics.get("Accuracy", 0))
+        return acc, "Accuracy"
 
-    return best_idx, best_acc
+    best_idx = max(range(len(history)), key=lambda i: get_best_metric(history[i])[0])
+    best_score, metric_name = get_best_metric(history[best_idx])
+
+    return best_idx, best_score, metric_name
 
 
 def get_best_experiment(history):
@@ -119,7 +125,7 @@ def get_best_experiment(history):
     if not history:
         return None, None
 
-    best_idx, _ = _find_best_experiment(history)
+    best_idx, _, _ = _find_best_experiment(history)
 
     if best_idx is None:
         return None, None
@@ -128,70 +134,125 @@ def get_best_experiment(history):
 
 
 def _render_comparison_chart(history, best_idx):
-    """Render comparison chart for experiments"""
+    """Render comparison chart showing REAL METRICS (Precision, Recall, F1)"""
     st.markdown("### 📊 Comparison Across Experiments")
 
-    # Get first metric that's between 0 and 1
-    metric_to_plot = None
-    for metric_name in history[0]["metrics"].keys():
-        if all(0 <= exp["metrics"].get(metric_name, -1) <= 1 for exp in history):
-            metric_to_plot = metric_name
-            break
-
-    if not metric_to_plot:
+    # Define metrics to compare (prioritize F1, Precision, Recall over Accuracy)
+    metrics_to_compare = [
+        ("CV F1-Score", "F1-Score", "F1"),
+        ("CV Precision", "Precision", "Prec"),
+        ("CV Recall", "Recall", "Rec"),
+        ("CV Accuracy", "Accuracy", "Acc"),
+    ]
+    
+    # Find which metrics are available in ALL experiments
+    available_metrics = []
+    for cv_name, tt_name, short_name in metrics_to_compare:
+        # Check if metric exists in all experiments (either CV or train/test version)
+        if all(cv_name in exp["metrics"] or tt_name in exp["metrics"] for exp in history):
+            available_metrics.append((cv_name, tt_name, short_name))
+    
+    if not available_metrics:
+        st.info("💡 No common metrics across experiments. Train experiments with the same CV strategy to compare.")
         return
 
-    fig, ax = plt.subplots(figsize=(10, 4))
-
+    # Prepare data for grouped bar chart
     exp_ids = [exp["id"] for exp in history]
-    metric_values = [exp["metrics"][metric_to_plot] for exp in history]
-    kernel_labels = [f"{exp['kernel']}" for exp in history]
-
-    # Color best experiment green
-    colors = ["#1f77b4" if i != best_idx else "#2ca02c" for i in range(len(history))]
-
-    bars = ax.bar(exp_ids, metric_values, color=colors, alpha=0.7, edgecolor="black")
-
-    # Add value labels on bars
-    for bar, value, label in zip(bars, metric_values, kernel_labels):
-        height = bar.get_height()
-        ax.text(
-            bar.get_x() + bar.get_width() / 2.0,
-            height,
-            f"{value:.4f}\n{label}",
-            ha="center",
-            va="bottom",
-            fontsize=8,
-        )
-
-    ax.set_xlabel("Experiment ID", fontsize=12)
-    ax.set_ylabel(metric_to_plot, fontsize=12)
+    x = np.arange(len(exp_ids))
+    width = 0.8 / len(available_metrics)  # Width of bars
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # Plot each metric as a grouped bar
+    for i, (cv_name, tt_name, short_name) in enumerate(available_metrics):
+        values = []
+        for exp in history:
+            # Try CV version first, then train/test version
+            val = exp["metrics"].get(cv_name, exp["metrics"].get(tt_name, 0))
+            values.append(val)
+        
+        offset = (i - len(available_metrics)/2) * width + width/2
+        bars = ax.bar(x + offset, values, width, label=short_name, alpha=0.8)
+        
+        # Add value labels on bars
+        for j, (bar, val) in enumerate(zip(bars, values)):
+            if val > 0:
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    bar.get_height() + 0.01,
+                    f"{val:.3f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=7,
+                    rotation=0,
+                )
+    
+    # Highlight best experiment with a marker
+    ax.scatter([best_idx], [1.05], marker='v', s=200, color='gold', 
+               edgecolors='black', linewidth=2, zorder=5, label='Best')
+    
+    # Styling
+    ax.set_xlabel("Experiment ID", fontsize=12, fontweight='bold')
+    ax.set_ylabel("Score", fontsize=12, fontweight='bold')
     ax.set_title(
-        f"{metric_to_plot} Comparison Across Experiments",
-        fontsize=14,
+        "Multi-Metric Comparison: F1, Precision, Recall",
+        fontsize=13,
         fontweight="bold",
     )
-    ax.set_ylim([max(0, min(metric_values) - 0.05), min(1, max(metric_values) + 0.1)])
-    ax.grid(axis="y", alpha=0.3)
-    ax.set_xticks(exp_ids)
-
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"#{exp_id}" for exp_id in exp_ids])
+    ax.set_ylim([0, 1.1])
+    ax.legend(loc='upper right', fontsize=10, framealpha=0.9)
+    ax.grid(axis="y", alpha=0.3, linestyle='--')
+    
+    # Add kernel labels below x-axis
+    kernel_labels = [exp['kernel'][:3] for exp in history]
+    for i, label in enumerate(kernel_labels):
+        ax.text(i, -0.08, label, ha='center', va='top', fontsize=8, 
+                style='italic', color='gray')
+    
+    plt.tight_layout()
     st.pyplot(fig)
 
-    # Add insights
-    _render_insights(history, best_idx, metric_values)
+    # Add insights with REAL metrics
+    _render_insights(history, best_idx, available_metrics)
 
 
-def _render_insights(history, best_idx, metric_values):
-    """Render insights about experiments"""
-    st.markdown("**💡 Insights:**")
+def _render_insights(history, best_idx, available_metrics):
+    """Render insights about experiments with REAL metrics focus"""
+    st.markdown("**💡 Key Insights (Focus on F1-Score for Imbalanced Data):**")
 
-    best_kernel = history[best_idx]["kernel"]
-    best_c = history[best_idx]["C"]
-    best_gamma = history[best_idx]["gamma"]
-
+    best_exp = history[best_idx]
+    best_kernel = best_exp["kernel"]
+    best_c = best_exp["C"]
+    best_gamma = best_exp["gamma"]
+    
+    # Get F1-Score for best experiment
+    best_f1 = best_exp["metrics"].get("CV F1-Score", best_exp["metrics"].get("F1-Score", 0))
+    best_prec = best_exp["metrics"].get("CV Precision", best_exp["metrics"].get("Precision", 0))
+    best_rec = best_exp["metrics"].get("CV Recall", best_exp["metrics"].get("Recall", 0))
+    
+    # Calculate F1 scores for all experiments
+    f1_scores = []
+    for exp in history:
+        f1 = exp["metrics"].get("CV F1-Score", exp["metrics"].get("F1-Score", 0))
+        f1_scores.append(f1)
+    
     st.markdown(f"""
-    - **Best performing kernel**: {best_kernel} (Experiment #{history[best_idx]["id"]})
-    - **Best parameters**: C={best_c:.2f}, gamma={best_gamma}
-    - **Performance range**: {min(metric_values):.4f} - {max(metric_values):.4f}
-    - **Performance variance**: {np.std(metric_values):.4f}
+    - **Best Model** (Exp #{best_exp["id"]}): {best_kernel} kernel, C={best_c:.2f}, gamma={best_gamma}
+    - **Best F1-Score**: {best_f1:.4f} (Precision: {best_prec:.4f}, Recall: {best_rec:.4f})
+    - **F1 Range Across Experiments**: {min(f1_scores):.4f} - {max(f1_scores):.4f}
+    - **F1 Variance**: {np.std(f1_scores):.4f} {'(high variance - unstable)' if np.std(f1_scores) > 0.1 else '(stable)'}
+    
+    ⚠️ **Remember**: High accuracy with low F1-Score means the model is biased toward the majority class!
     """)
+    
+    # Warn about accuracy trap
+    best_acc = best_exp["metrics"].get("CV Accuracy", best_exp["metrics"].get("Accuracy", 0))
+    if best_acc > 0.85 and best_f1 < 0.5:
+        st.warning(
+            f"⚠️ **Accuracy Trap Detected!** "
+            f"Accuracy={best_acc:.3f} but F1={best_f1:.3f}. "
+            f"This model is likely just predicting the majority class. "
+            f"Focus on improving Precision and Recall!"
+        )

@@ -34,16 +34,17 @@ def svm_page():
 
     st.divider()
 
-    # Model Configuration Section
-    # Only show when no model trained, or always available in compact form
-    render_model_configuration()
+    # Two-column layout: controls on left, visualizations on right
+    col_controls, col_viz = st.columns([1, 2])
 
-    # Visualizations Section
-    st.divider()
-    render_visualizations()
+    with col_controls:
+        render_model_configuration()
 
-    # Experiment History Section
+    with col_viz:
+        render_visualizations()
+
+    # Experiment History Section (full width)
     render_experiment_history(st.session_state.svm)
 
-    # Save Best Model Section
+    # Save Best Model Section (full width)
     render_best_model_saver()

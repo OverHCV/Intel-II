@@ -398,6 +398,70 @@ def plot_interactive_scatter_2d(
     return fig
 
 
+def plot_roc_curve(y_true, y_proba, title="ROC Curve"):
+    """
+    Plot ROC curve with AUC score
+
+    Args:
+        y_true: True labels
+        y_proba: Probability predictions (n_samples, n_classes) or (n_samples,) for binary
+        title: Plot title
+
+    Returns:
+        matplotlib Figure or None if not binary classification
+    """
+    from sklearn.metrics import auc, roc_curve
+
+    # Check if binary classification
+    unique_classes = np.unique(y_true)
+    if len(unique_classes) != 2:
+        return None
+
+    # Get probabilities for positive class
+    if y_proba.ndim == 2:
+        y_score = y_proba[:, 1]  # Probability of positive class
+    else:
+        y_score = y_proba
+
+    # Calculate ROC curve
+    fpr, tpr, thresholds = roc_curve(y_true, y_score)
+    roc_auc = auc(fpr, tpr)
+
+    # Create plot
+    fig, ax = plt.subplots(figsize=CONF[Keys.FIGURE_SIZE_SMALL])
+
+    # Plot ROC curve
+    ax.plot(
+        fpr,
+        tpr,
+        color="darkorange",
+        lw=2,
+        label=f"ROC curve (AUC = {roc_auc:.3f})",
+    )
+
+    # Plot diagonal reference line
+    ax.plot(
+        [0, 1],
+        [0, 1],
+        color="navy",
+        lw=2,
+        linestyle="--",
+        label="Random Classifier",
+    )
+
+    # Styling
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel("False Positive Rate", fontsize=11)
+    ax.set_ylabel("True Positive Rate", fontsize=11)
+    ax.set_title(title, fontsize=12, fontweight="bold")
+    ax.legend(loc="lower right", fontsize=10)
+    ax.grid(alpha=0.3)
+
+    plt.tight_layout()
+    return fig
+
+
 def plot_interactive_scatter_3d(
     X,
     y,
