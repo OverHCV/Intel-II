@@ -83,11 +83,22 @@ def _save_best_model(best_exp, metric_name, acc):
         acc: Accuracy value
     """
     with st.spinner(f"⏳ Retraining best model (Exp #{best_exp['id']})..."):
+        # Convert gamma back to proper type (string gamma is stored in experiment history)
+        gamma_value = best_exp["gamma"]
+        if gamma_value in ["-", ""]:
+            gamma_value = "scale"
+        elif gamma_value not in ["scale", "auto"]:
+            # Convert numeric string to float
+            try:
+                gamma_value = float(gamma_value)
+            except (ValueError, TypeError):
+                gamma_value = "scale"
+        
         # Retrain model with best parameters
         model = SVC(
             kernel=best_exp["kernel"],
             C=best_exp["C"],
-            gamma=best_exp["gamma"] if best_exp["gamma"] not in ["-", ""] else "scale",
+            gamma=gamma_value,
             degree=best_exp["degree"] if isinstance(best_exp["degree"], int) else 3,
             random_state=CONF[Keys.RANDOM_STATE],
         )
@@ -96,10 +107,14 @@ def _save_best_model(best_exp, metric_name, acc):
         X, y, _, _ = get_data()
         model.fit(X, y)
 
+        # Check if trained on PCA data
+        trained_on_pca = st.session_state.pca.get("pca_applied", False) and X.shape[1] == st.session_state.pca.get("n_components", 0)
+
         # Save as best model
         st.session_state.svm["best_model"] = model
         st.session_state.svm["best_params"] = best_exp.copy()
         st.session_state.svm["best_metrics"] = best_exp["metrics"].copy()
+        st.session_state.svm["trained_on_pca"] = trained_on_pca
 
         st.success(
             f"✅ Best model saved: Experiment #{best_exp['id']} ({metric_name}: {acc:.4f})"

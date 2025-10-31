@@ -424,12 +424,20 @@ def _render_confusion_matrices_comparison(model_type):
     if model_type == "svm":
         original_model = st.session_state.svm.get("best_model")
         pca_model = st.session_state.pca.get("svm_pca_model")
+        trained_on_pca = st.session_state.svm.get("trained_on_pca", False)
     else:
         original_model = st.session_state.ann.get("best_model")
         pca_model = st.session_state.pca.get("ann_pca_model")
+        trained_on_pca = st.session_state.ann.get("trained_on_pca", False)
 
     # Get predictions for original model
-    y_pred_original = original_model.predict(X)
+    # If original model was trained on PCA data, use PCA features
+    if trained_on_pca:
+        X_original = st.session_state.pca["X_pca"]
+    else:
+        X_original = X
+    
+    y_pred_original = original_model.predict(X_original)
     
     # Get predictions for PCA model
     X_pca = st.session_state.pca["X_pca"]

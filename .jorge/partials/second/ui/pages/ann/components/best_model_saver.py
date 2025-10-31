@@ -101,6 +101,9 @@ def _save_best_model(best_exp, metric_name, acc, X, y):
 
         model.fit(X, y)
 
+        # Check if trained on PCA data
+        trained_on_pca = st.session_state.pca.get("pca_applied", False) and X.shape[1] == st.session_state.pca.get("n_components", 0)
+
         # Save to session state
         st.session_state.ann["best_model"] = model
         st.session_state.ann["best_metrics"] = best_exp["metrics"]
@@ -111,6 +114,7 @@ def _save_best_model(best_exp, metric_name, acc, X, y):
             "max_iter": best_exp["max_iter"],
         }
         st.session_state.ann["saved_exp_id"] = best_exp["id"]
+        st.session_state.ann["trained_on_pca"] = trained_on_pca
 
         st.success(
             f"✅ Model saved! Experiment #{best_exp['id']} with {acc:.4f} {metric_name}"

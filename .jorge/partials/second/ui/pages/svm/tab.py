@@ -7,6 +7,7 @@ import streamlit as st
 from ui.pages.svm.components import (
     render_best_model_saver,
     render_model_configuration,
+    render_test_evaluation,
     render_visualizations,
 )
 from ui.pages.svm.docs import render_svm_documentation
@@ -42,6 +43,9 @@ def svm_page():
 
     with col_viz:
         render_visualizations()
+
+    # Test Evaluation Section (full width) - appears after columns
+    render_test_evaluation()
 
     # Experiment History Section (full width)
     render_experiment_history(st.session_state.svm)

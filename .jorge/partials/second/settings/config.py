@@ -47,6 +47,10 @@ class Keys:
     RANDOM_STATE = "random_state"
     TEST_SIZE = "test_size"
     CV_FOLDS = "cv_folds"
+    
+    # Class balancing
+    USE_BALANCING = "use_balancing"
+    BALANCING_TECHNIQUE = "balancing_technique"
 
     # SVM configurations
     SVM_KERNELS = "svm_kernels"
@@ -147,6 +151,11 @@ CONF = {
     Keys.RANDOM_STATE: 72,
     Keys.TEST_SIZE: 0.2,
     Keys.CV_FOLDS: 5,
+    # ===========================
+    # Class Balancing
+    # ===========================
+    Keys.USE_BALANCING: False,  # Enable SMOTE or other balancing techniques
+    Keys.BALANCING_TECHNIQUE: "SMOTE",  # Default technique
     # ===========================
     # SVM Configuration (Task 1)
     # ===========================

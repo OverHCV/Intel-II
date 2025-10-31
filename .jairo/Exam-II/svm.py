@@ -19,9 +19,15 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn import metrics
+from sklearn.metrics import accuracy_score
+
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import classification_report
 
 from google.colab import files
 import io
+
+
 archivo=files.upload()
 dataframe=pd.read_csv(io.BytesIO(archivo['ObesidadDataSet.csv']),delimiter=";")
 
@@ -123,14 +129,12 @@ yPredict  = modelo.predict(XTest)
 accuracy = metrics.accuracy_score(yTest, yPredict)
 print("Accuracy =", accuracy)
 
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import classification_report
+
 precision_recall_fscore_support(yTest,yPredict, average=None)
 target_names = ['Insufficient_Weight','Normal_Weight', 'Obesity_Type_I', 'Obesity_Type_II','Obesity_Type_III','Overweight_Level_I','Overweight_Level_II']
 print(classification_report(yTest,yPredict, target_names=target_names))
 
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import classification_report, accuracy_score
+
 
 precision, recall, f1, support = precision_recall_fscore_support(yTest, yPredict, average='micro')
 accuracy = accuracy_score(yTest, yPredict)
@@ -150,8 +154,7 @@ matriz=confusion_matrix(yTest,yPredict)
 print(matriz)
 sb.heatmap(matriz,annot=True,cmap="Blues")
 
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import classification_report
+
 precision_recall_fscore_support(yTest,yPredict, average=None)
 target_names = ['Insufficient_Weight','Normal_Weight', 'Obesity_Type_I', 'Obesity_Type_II','Obesity_Type_III','Overweight_Level_I','Overweight_Level_II']
 print(classification_report(yTest,yPredict, target_names=target_names))
