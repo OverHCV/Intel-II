@@ -1,6 +1,6 @@
 {
   // open ps terminal in directory .jorge/partials
-  "terminal.integrated.cwd": ".jorge/partials/second/",
+  "terminal.integrated.cwd": ".jorge/partials/third/",
   // use venv from root directory
   "python.defaultInterpreterPath": ".venv/bin/python",
   "files.exclude": {
