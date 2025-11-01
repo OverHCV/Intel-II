@@ -27,6 +27,7 @@ alwaysApply: true
 13. Retry operations that depend on the network.
 14. Write future-proof code, not code for next week.
 15. Write extensible code.
+15. Use comments to explain Why, not How or What.
 16. Write short functions with one single purpose.
 16. Never write files longer than 300 LOC, else single responsability gets lost
 17. Always think about what can go wrong with your code, be creative
@@ -36,16 +37,16 @@ alwaysApply: true
 21. Prefer returning functions early over long blocks.
 22. Prefer readable, maintainable code over performance.
 23. Before writing code/algorithms, first design the input data structures and the output data structures.
+23. There's always more than 1 solution to a problem, and generally the first one you find is not good.
 24. Never trust the user/system input.
 25. If you are taking too much time solving a problem, go back to the input data and check if you are missing information.
 26. When debugging an issue, separate facts from assumptions and verify assumption by assumption to see whether it's true or not.
 27. Optimize for common cases and not rare ones.
 28. Avoid magic numbers in the code. Use constants with explicit names.
 29. Choose progress over perfection, everything that we do can be better so perfection doesn't exist and trying to achieve only delays or stops progress.
-30. There's always more than 1 solution to a problem, and generally the first one you find is not good.
 31. The backend should not trust their clients AT ALL.
 32. The clients (Frontend, mobile apps, etc…) trust the backend but not completely, it should be paranoid and be prepared for failures.
-33. Add spaces between blocks of related code, like paragraphs when writing prose.
+33. Add spaces between blocks of related code, but formating is always welcomed.
 34. Do not share variables that are accessed by multiple threads (unless they are thread-safe)
 35. When designing, always have a single source of truth for your data.
 36. In HTTP don't return 5xx unless there's something really broken.
@@ -56,7 +57,6 @@ alwaysApply: true
 41. If you decide to use a global variable make sure the name and everything suggests that it should not be changed.
 42. Only use global variables when the alternative is too “expensive”, always consider an alternative solution and its cost.
 43. Don't duplicate code within the same context. It's ok to duplicate it in different contexts.
-44. Use comments to explain Why, not How or What.
 45. If you're gonna use a string that can change or you're going to use more than once then use a constant
 46. Only use short variable names in short functions
 47. When writing code, think what's the worst thing that could happen if someone misuses your code? How much money is going to be lost? How much information is the hacker going to be able to gather when my code is hacked?
