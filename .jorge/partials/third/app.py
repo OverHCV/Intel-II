@@ -5,9 +5,12 @@ Run with: streamlit run app.py
 """
 
 import streamlit as st
+import pandas as pd
 from pathlib import Path
 import sys
 from ui.state_manager import init_state, get_state, set_state, StateKeys
+from data.loader import load_dataset
+from constants import FEATURE_CATEGORIES, FEATURE_DESCRIPTIONS
 
 # Add project root to path
 project_root = Path(__file__).parent
@@ -57,7 +60,7 @@ for col, (emoji, page_name) in zip(nav_cols, nav_options):
             f"{emoji} {page_name}",
             key=f"nav_{page_name}",
             type=button_type,
-            use_container_width=True
+            width="stretch"
         ):
             set_state(StateKeys.CURRENT_PAGE, page_name)
             st.rerun()
@@ -127,6 +130,114 @@ if current_page == "Home":
     ---
     """)
     
+    # Dataset Info FIRST
+    st.markdown("### 📊 Dataset: Student Performance")
+    
+    st.markdown("""
+    Este dataset contiene información sobre el rendimiento de estudiantes portugueses 
+    en dos materias: **Matemáticas** (395 estudiantes) y **Portugués** (649 estudiantes).
+    
+    **Origen**: Escuelas secundarias Gabriel Pereira y Mousinho da Silveira (Portugal, 2008)
+    """)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Portuguese", "649 estudiantes", "Entrenamiento")
+    with col2:
+        st.metric("Math", "395 estudiantes", "Prueba cruzada")
+    with col3:
+        st.metric("Features", "33 atributos", "Mixtos")
+    
+    st.info("""
+    **Estrategia**: Entrenar con Portuguese (mayor cantidad de datos), 
+    validar con Math (generalización entre materias).
+    """)
+    
+    # Feature categories
+    st.markdown("#### 📋 Categorías de Atributos")
+    
+    feat_tabs = st.tabs(["🏠 Demográficos", "👨‍👩‍👧 Familiares", "📚 Académicos", "🎯 Sociales", "🎭 Comportamiento"])
+    
+    with feat_tabs[0]:
+        st.markdown("**Características demográficas del estudiante:**")
+        for feat in FEATURE_CATEGORIES["Demographic"]:
+            st.markdown(f"- **{feat}**: {FEATURE_DESCRIPTIONS[feat]}")
+    
+    with feat_tabs[1]:
+        st.markdown("**Contexto familiar:**")
+        for feat in FEATURE_CATEGORIES["Family"]:
+            st.markdown(f"- **{feat}**: {FEATURE_DESCRIPTIONS[feat]}")
+    
+    with feat_tabs[2]:
+        st.markdown("**Factores académicos:**")
+        for feat in FEATURE_CATEGORIES["Academic"]:
+            st.markdown(f"- **{feat}**: {FEATURE_DESCRIPTIONS[feat]}")
+        st.warning("⚠️ **G1** y **G2** se eliminan para prevenir data leakage (predicen G3 trivialmente)")
+    
+    with feat_tabs[3]:
+        st.markdown("**Actividades sociales:**")
+        for feat in FEATURE_CATEGORIES["Social"]:
+            st.markdown(f"- **{feat}**: {FEATURE_DESCRIPTIONS[feat]}")
+    
+    with feat_tabs[4]:
+        st.markdown("**Patrones de comportamiento:**")
+        for feat in FEATURE_CATEGORIES["Behavior"]:
+            st.markdown(f"- **{feat}**: {FEATURE_DESCRIPTIONS[feat]}")
+    
+    st.markdown("---")
+    
+    # Dataset Preview with pagination
+    st.markdown("#### 📄 Vista Previa del Dataset")
+    
+    # Load dataset for preview
+    try:
+        preview_df = load_dataset("portuguese")
+        
+        # Show dataset info
+        col_info1, col_info2, col_info3 = st.columns(3)
+        with col_info1:
+            st.metric("Total Filas", preview_df.shape[0])
+        with col_info2:
+            st.metric("Total Columnas", preview_df.shape[1])
+        with col_info3:
+            st.metric("Rango G3", f"{preview_df['G3'].min()}-{preview_df['G3'].max()}")
+        
+        # Pagination controls
+        rows_per_page = 10
+        total_pages = (len(preview_df) + rows_per_page - 1) // rows_per_page
+        
+        col_page1, col_page2 = st.columns([1, 4])
+        with col_page1:
+            page_num = st.number_input(
+                "Página", 
+                min_value=1, 
+                max_value=total_pages, 
+                value=1,
+                step=1
+            )
+        with col_page2:
+            st.caption(f"Mostrando filas {(page_num-1)*rows_per_page + 1} - {min(page_num*rows_per_page, len(preview_df))} de {len(preview_df)}")
+        
+        # Get page data
+        start_idx = (page_num - 1) * rows_per_page
+        end_idx = start_idx + rows_per_page
+        page_data = preview_df.iloc[start_idx:end_idx].copy()
+        
+        # Display with better formatting
+        st.dataframe(
+            page_data,
+            width="stretch",
+            height=400,
+            hide_index=False
+        )
+        
+        st.caption("💡 Esta es la data cruda. En 'Dataset Review' se preprocesa: G1/G2 se remueven, G3 → clases, encoding, scaling, balancing.")
+        
+    except Exception as e:
+        st.warning(f"No se pudo cargar preview del dataset: {str(e)}")
+    
+    st.markdown("---")
+    
     # Exam Requirements
     st.markdown("### 📋 Requisitos del Examen")
     
@@ -180,37 +291,6 @@ if current_page == "Home":
             st.progress(0.1, text="Pendiente - Fase 3")
     
     st.markdown("---")
-    
-    # Task 4 - Presentation
-    with st.container():
-        col_icon, col_content = st.columns([0.1, 0.9])
-        with col_icon:
-            st.markdown("### 🎤")
-        with col_content:
-            st.markdown("""
-            **Tarea 4 (2.5 puntos): Sustentación Oral**
-            
-            Presentación oral en horario de clase con análisis de resultados y conclusiones.
-            """)
-            st.progress(0.0, text="Pendiente - Final")
-    
-    st.markdown("---")
-    
-    # Dataset Info
-    st.markdown("### 📊 Dataset: Student Performance")
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Portuguese", "649 estudiantes", "Entrenamiento")
-    with col2:
-        st.metric("Math", "395 estudiantes", "Prueba cruzada")
-    with col3:
-        st.metric("Features", "33 atributos", "Mixtos")
-    
-    st.info("""
-    **Estrategia**: Entrenar con Portuguese (mayor cantidad de datos), 
-    validar con Math (generalización entre materias).
-    """)
     
     # Getting Started
     st.markdown("### 🚀 Comenzar")

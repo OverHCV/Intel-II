@@ -17,6 +17,7 @@ from data.transformer import engineer_target, remove_leakage_features, split_fea
 from data.preprocessor import encode_categorical, scale_numerical
 from data.balancer import balance_classes
 from ui.state_manager import get_state, set_state, StateKeys
+from constants import FEATURE_DESCRIPTIONS, FEATURE_SHORT_NAMES, get_feature_description
 
 logger = logging.getLogger(__name__)
 
@@ -25,44 +26,44 @@ def render():
     """Render the Dataset Review page."""
     
     # THEORY FIRST - As requested
-    with st.expander("📚 THEORY: Why Data Preparation is Critical", expanded=False):
+    with st.expander("📚 TEORÍA: Por qué la Preparación de Datos es Crítica", expanded=False):
         st.markdown("""
-        ### "Garbage In, Garbage Out"
+        ### "Basura Entra, Basura Sale"
         
-        **WHY this page matters:**  
-        Even the best algorithm fails with poor data. This page ensures:
-        - ✅ Data quality (no missing values, correct ranges)
-        - ✅ Proper target engineering (G3 → meaningful categories)
-        - ✅ No data leakage (removing G1, G2 which predict G3 trivially)
-        - ✅ Balanced classes (preventing majority class bias)
+        **Importancia de esta página:**  
+        Incluso el mejor algoritmo falla con datos pobres. Esta página asegura:
+        - ✅ Calidad de datos (sin valores faltantes, rangos correctos)
+        - ✅ Ingeniería de target adecuada (G3 → categorías significativas)
+        - ✅ Sin fuga de datos (remover G1, G2 que predicen G3 trivialmente)
+        - ✅ Clases balanceadas (prevenir sesgo de clase mayoritaria)
         
-        ### Dataset Strategy
+        ### Estrategia de Datasets
         
-        - **Portuguese**: 649 students → TRAINING (more data = better learning)
-        - **Math**: 395 students → TEST (different subject tests generalization)
+        - **Portuguese**: 649 estudiantes → ENTRENAMIENTO (más datos = mejor aprendizaje)
+        - **Math**: 395 estudiantes → PRUEBA (materia diferente prueba generalización)
         
-        **WHY this split?**  
-        Training on Portuguese (larger) gives model more examples. Testing on Math
-        (different subject) reveals if learned patterns are truly about student
-        characteristics or just subject-specific quirks.
+        **Razón del split:**  
+        Entrenar en Portuguese (más grande) da más ejemplos al modelo. Probar en Math
+        (materia diferente) revela si los patrones aprendidos son sobre características
+        del estudiante o solo quirks específicos de la materia.
         
-        ### Data Leakage Problem
+        ### Problema de Fuga de Datos
         
-        **Problem**: G1 (period 1 grade) and G2 (period 2 grade) are highly
-        correlated with G3 (final grade). Including them makes prediction trivial.
+        **Problema**: G1 (nota periodo 1) y G2 (nota periodo 2) están altamente
+        correlacionadas con G3 (nota final). Incluirlas hace la predicción trivial.
         
-        **Solution**: Remove G1 and G2. Predict G3 from demographic/social/behavioral
-        features only - these are actionable factors.
+        **Solución**: Remover G1 y G2. Predecir G3 solo desde factores demográficos/sociales/
+        comportamentales - estos son factores accionables.
         
-        ### Class Balancing: SMOTE Explained
+        ### Balanceo de Clases: SMOTE Explicado
         
-        **Problem**: If 80% Pass, 20% Fail → model just predicts "Pass" for everyone
-        and gets 80% accuracy without learning anything useful.
+        **Problema**: Si 80% Aprueba, 20% Reprueba → modelo solo predice "Aprueba" para todos
+        y obtiene 80% accuracy sin aprender nada útil.
         
-        **SMOTE**: Creates synthetic Fail examples by interpolating between existing
-        Fail students. Better than duplication because it adds diversity.
+        **SMOTE**: Crea ejemplos sintéticos de Reprueba interpolando entre estudiantes
+        Reprobados existentes. Mejor que duplicación porque agrega diversidad.
         
-        **When to use**: Imbalance ratio > 2.0 (one class is 2x the other)
+        **Cuándo usar**: Ratio de desbalance > 2.0 (una clase es 2x la otra)
         """)
     
     st.markdown("""
@@ -85,7 +86,7 @@ def render():
             ["Portuguese (Training - 649 students)",
              "Math (Test - 395 students)",
              "Both (Combined - 1044 students)"],
-            help="WHY: Portuguese has more samples (649) → better for training. Math (395) tests if patterns generalize across subjects."
+            help="Portuguese tiene más muestras (649) → mejor para entrenamiento. Math (395) prueba si los patrones generalizan entre materias."
         )
         
         st.markdown("---")
@@ -95,10 +96,10 @@ def render():
         target_strategy = st.selectbox(
             "G3 Transformation",
             ["Five-class (A/B/C/D/F)",
-            "Binary (Pass/Fail at 10)",
+             "Binary (Pass/Fail at 10)",
              "Three-class (Low/Med/High)",
              "Custom thresholds"],
-            help="WHY: Binary (Pass/Fail) is simple and actionable. Multi-class enables finer interventions (e.g., 'Medium' students need different support than 'Low')."
+            help="Binary (Pass/Fail) es simple y accionable. Multi-clase permite intervenciones más finas (e.g., estudiantes 'Medios' necesitan diferente apoyo que 'Bajos')."
         )
         
         if target_strategy == "Custom thresholds":
@@ -115,13 +116,13 @@ def render():
         balance_method = st.selectbox(
             "Balancing Method",
             ["SMOTE", "None", "Random Oversample", "Random Undersample"],
-            help="WHY: SMOTE (default) creates synthetic examples (best for imbalanced data). None if already balanced. Random Oversample duplicates. Random Undersample loses data."
+            help="SMOTE (default) crea ejemplos sintéticos (mejor para datos desbalanceados). None si ya está balanceado. Random Oversample duplica. Random Undersample pierde datos."
         )
         
         if balance_method == "SMOTE":
             k_neighbors = st.slider(
                 "K-neighbors", 1, 10, 5,
-                help="WHY: SMOTE creates synthetic samples by interpolating between k nearest neighbors. Higher k = more diverse but risk including wrong class."
+                help="SMOTE crea muestras sintéticas interpolando entre k vecinos más cercanos. Mayor k = más diversidad pero riesgo de incluir clase incorrecta."
             )
         
         st.markdown("---")
@@ -191,7 +192,7 @@ def render():
         
         # Feature selection info
         st.markdown("---")
-        st.info("🔒 **Data Leakage Prevention**: G1 and G2 are automatically excluded from features. WHY: They predict G3 trivially.")
+        st.info("🔒 **Prevención Fuga de Datos**: G1 y G2 se excluyen automáticamente. Predicen G3 trivialmente.")
     
     with col2:
         st.subheader("📈 Data Visualization")
@@ -221,7 +222,7 @@ def render():
                 plt.close()
                 
                 imbalance_ratio = max(counts) / min(counts) if len(counts) > 1 else 1.0
-                st.caption(f"Imbalance ratio: {imbalance_ratio:.2f}. WHY: Ratio > 2.0 means one class dominates → model bias")
+                st.caption(f"Ratio de desbalance: {imbalance_ratio:.2f}. Si >2.0 una clase domina → sesgo del modelo")
             
             with tabs[1]:
                 # REAL Correlation heatmap
@@ -251,7 +252,7 @@ def render():
                 st.pyplot(fig_corr)
                 plt.close()
                 
-                st.caption("💡 Red = positive correlation, Blue = negative. Dark colors = strong correlation. WHY: High correlation (>0.9) = redundant features.")
+                st.caption("💡 Rojo = correlación positiva, Azul = negativa. Colores oscuros = correlación fuerte. Alta correlación (>0.9) = características redundantes.")
                 
                 # Show top correlations
                 corr_pairs = []
@@ -262,18 +263,58 @@ def render():
                 
                 if corr_pairs:
                     st.markdown("**Top 5 Correlated Feature Pairs:**")
-                    for i, j, corr in corr_pairs[:5]:
-                        st.text(f"Feature {i} ⋈ Feature {j}: {corr:.3f}")
+                    # Get actual feature names from raw data
+                    raw_df = get_state(StateKeys.RAW_DATA, None)
+                    if raw_df is not None:
+                        feature_names = list(raw_df.columns)
+                        for i, j, corr in corr_pairs[:5]:
+                            feat_i = feature_names[i] if i < len(feature_names) else f"F{i}"
+                            feat_j = feature_names[j] if j < len(feature_names) else f"F{j}"
+                            desc_i = get_feature_description(feat_i)
+                            desc_j = get_feature_description(feat_j)
+                            st.markdown(f"**{feat_i}** ⋈ **{feat_j}**: {corr:.3f}")
+                            st.caption(f"   {desc_i} ↔ {desc_j}")
+                    else:
+                        for i, j, corr in corr_pairs[:5]:
+                            st.markdown(f"Feature {i} ⋈ Feature {j}: {corr:.3f}")
             
             with tabs[2]:
-                # REAL Summary statistics
+                # REAL Summary statistics with feature descriptions
                 st.markdown("#### 📊 Feature Statistics")
+                
+                # Get actual feature names
+                raw_df = get_state(StateKeys.RAW_DATA, None)
                 df_stats = pd.DataFrame(X_viz)
                 summary = df_stats.describe().T
-                summary['Feature'] = [f"Feature_{i}" for i in range(len(summary))]
-                summary = summary[['Feature', 'mean', 'std', 'min', 'max']]
-                summary.columns = ['Feature', 'Mean', 'Std Dev', 'Min', 'Max']
-                st.dataframe(summary, use_container_width=True, height=400)
+                
+                if raw_df is not None:
+                    feature_names = list(raw_df.columns)
+                    # Remove G1, G2, G3, dataset_source if present
+                    feature_names = [f for f in feature_names if f not in ['G1', 'G2', 'G3', 'dataset_source']]
+                    
+                    # Reset index to make it a column
+                    summary = summary.reset_index()
+                    
+                    # Map numeric indices to actual feature names (if lengths match)
+                    if len(feature_names) == len(summary):
+                        summary.insert(0, 'Feature', feature_names)
+                        summary.insert(1, 'Description', summary['Feature'].apply(get_feature_description))
+                        # Select only relevant columns
+                        summary = summary[['Feature', 'Description', 'mean', 'std', 'min', 'max']]
+                        summary.columns = ['Feature', 'Descripción', 'Media', 'Desv. Est.', 'Mín', 'Máx']
+                    else:
+                        # Fallback if mismatch
+                        summary.insert(0, 'Feature', [f"Feature_{i}" for i in range(len(summary))])
+                        summary = summary[['Feature', 'mean', 'std', 'min', 'max']]
+                        summary.columns = ['Feature', 'Media', 'Desv. Est.', 'Mín', 'Máx']
+                else:
+                    summary = summary.reset_index()
+                    summary.insert(0, 'Feature', [f"Feature_{i}" for i in range(len(summary))])
+                    summary = summary[['Feature', 'mean', 'std', 'min', 'max']]
+                    summary.columns = ['Feature', 'Media', 'Desv. Est.', 'Mín', 'Máx']
+                
+                st.dataframe(summary, width="stretch", height=400)
+                st.caption("💡 Estadísticas descriptivas de cada característica. Comprender las características es clave para interpretar decisiones del modelo.")
         
         else:
             st.info("Processing data... Visualizations will appear automatically")

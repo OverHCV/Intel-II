@@ -103,9 +103,18 @@ def render():
                 from core.evaluation import evaluate_classification
                 from sklearn.model_selection import train_test_split
                 
+                # Get feature names from raw data
+                raw_df = get_state(StateKeys.RAW_DATA, None)
+                if raw_df is not None:
+                    # Exclude G1, G2, G3, and dataset_source
+                    feature_names = [col for col in raw_df.columns 
+                                   if col not in ['G1', 'G2', 'G3', 'dataset_source']]
+                else:
+                    feature_names = [f"feature_{i}" for i in range(X_ready.shape[1])]
+                
                 # Split data
                 X_train, X_test, y_train, y_test = train_test_split(
-                    X_ready, y_ready, test_size=0.2, random_state=42
+                    X_ready, y_ready, test_size=0.2, random_state=42, stratify=y_ready
                 )
                 
                 # Train model
@@ -123,9 +132,19 @@ def render():
                 # Evaluate
                 metrics = evaluate_classification(y_test, y_pred)
                 
+                # Get class names
+                unique_classes = np.unique(y_ready)
+                if len(unique_classes) == 2:
+                    class_names = ["Reprueba", "Aprueba"]
+                elif len(unique_classes) == 3:
+                    class_names = ["Bajo", "Medio", "Alto"]
+                elif len(unique_classes) == 5:
+                    class_names = ["F", "D", "C", "B", "A"]
+                else:
+                    class_names = [f"Clase {i}" for i in unique_classes]
+                
                 # Extract rules
-                feature_names = [f"feature_{i}" for i in range(X_ready.shape[1])]  # TODO: Get real names
-                rules = extract_rules(model, feature_names, class_names=["Fail", "Pass"])
+                rules = extract_rules(model, feature_names, class_names=class_names)
                 ranked_rules = rank_rules(rules, criterion="combined")
                 
                 # Cross-validation
@@ -147,10 +166,18 @@ def render():
                 set_state(StateKeys.DT_MODEL, model)
                 set_state(StateKeys.DT_RULES, ranked_rules)
                 
-                st.success("✅ Model trained successfully!")
+                # Show data split info
+                st.info(f"""
+                📊 **Datos utilizados**: 
+                - Total después de SMOTE: **{len(X_ready)} estudiantes** ({len(X_train)} train, {len(X_test)} test)
+                - Features: **{X_ready.shape[1]} características**
+                - Target: **{len(np.unique(y_ready))} clases** balanceadas
+                """)
+                
+                st.success("✅ Modelo CART entrenado exitosamente!")
                 
                 # Display results
-                st.markdown("### 📊 Results")
+                st.markdown("### 📊 Resultados")
                 
                 # Metrics
                 metric_cols = st.columns(4)
@@ -169,67 +196,105 @@ def render():
                 st.caption("WHY: Single train/test split can be lucky/unlucky. CV gives robust estimate.")
                 
                 # Confusion Matrix
-                st.markdown("#### 🎯 Confusion Matrix")
+                st.markdown("#### 🎯 Matriz de Confusión")
                 cm = np.array(metrics['confusion_matrix'])
                 fig_cm, ax_cm = plt.subplots(figsize=(6, 5))
                 im = ax_cm.imshow(cm, cmap='Blues')
-                ax_cm.set_xticks([0, 1])
-                ax_cm.set_yticks([0, 1])
-                ax_cm.set_xticklabels(["Fail", "Pass"])
-                ax_cm.set_yticklabels(["Fail", "Pass"])
-                ax_cm.set_xlabel("Predicted")
-                ax_cm.set_ylabel("True")
-                ax_cm.set_title("Confusion Matrix")
+                
+                # Set ticks based on number of classes
+                n_classes = len(class_names)
+                ax_cm.set_xticks(range(n_classes))
+                ax_cm.set_yticks(range(n_classes))
+                ax_cm.set_xticklabels(class_names)
+                ax_cm.set_yticklabels(class_names)
+                ax_cm.set_xlabel("Predicho")
+                ax_cm.set_ylabel("Verdadero")
+                ax_cm.set_title("Matriz de Confusión")
                 
                 # Add text annotations
-                for i in range(2):
-                    for j in range(2):
-                        ax_cm.text(j, i, str(cm[i, j]), ha="center", va="center", color="black", fontsize=20)
+                for i in range(n_classes):
+                    for j in range(n_classes):
+                        ax_cm.text(j, i, str(cm[i, j]), ha="center", va="center", 
+                                  color="white" if cm[i, j] > cm.max()/2 else "black", fontsize=16)
                 
                 plt.colorbar(im, ax=ax_cm)
                 st.pyplot(fig_cm)
                 plt.close()
                 
                 # Tree visualization
-                st.markdown("#### 🌳 Tree Structure")
+                st.markdown("#### 🌳 Estructura del Árbol")
                 fig_tree, ax_tree = plt.subplots(figsize=(20, 10))
                 plot_tree(
                     model,
                     feature_names=feature_names,
-                    class_names=["Fail", "Pass"],
+                    class_names=class_names,
                     filled=True,
                     ax=ax_tree,
-                    fontsize=8
+                    fontsize=8,
+                    max_depth=3  # Only show first 3 levels for readability
                 )
+                ax_tree.set_title(f"Árbol CART (primeros 3 niveles)", fontsize=14)
                 st.pyplot(fig_tree)
                 plt.close()
-                st.caption(f"Tree depth: {model.get_depth()}, Leaves: {model.get_n_leaves()}")
+                st.caption(f"Profundidad total: {model.get_depth()}, Hojas: {model.get_n_leaves()}. Se muestran solo 3 niveles por legibilidad.")
                 
-                # Feature Importance
-                st.markdown("#### ⭐ Top 10 Feature Importance")
+                # Feature Importance with descriptions
+                st.markdown("#### ⭐ Top 10 Importancia de Características")
+                
+                # Import feature descriptions
+                from constants import get_feature_description
+                
                 fig_imp, ax_imp = plt.subplots(figsize=(10, 6))
-                features = list(feature_importance.keys())
-                importances = list(feature_importance.values())
-                ax_imp.barh(features, importances, color='steelblue')
-                ax_imp.set_xlabel("Importance Score")
-                ax_imp.set_title("Feature Importance (Gini Impurity Reduction)")
+                features = list(feature_importance.keys())[:10]  # Top 10
+                importances = list(feature_importance.values())[:10]
+                
+                # Add descriptions
+                labels_with_desc = []
+                for feat in features:
+                    desc = get_feature_description(feat)
+                    # Shorten description for plot
+                    short_desc = desc.split("(")[0].strip()[:30]
+                    labels_with_desc.append(f"{feat}\n({short_desc})")
+                
+                ax_imp.barh(range(len(features)), importances, color='steelblue')
+                ax_imp.set_yticks(range(len(features)))
+                ax_imp.set_yticklabels(labels_with_desc, fontsize=9)
+                ax_imp.set_xlabel("Importancia (reducción Gini)")
+                ax_imp.set_title("Importancia de Características")
                 ax_imp.invert_yaxis()
+                plt.tight_layout()
                 st.pyplot(fig_imp)
                 plt.close()
-                st.caption("WHY: Shows which features are most useful for splitting. Higher = more important.")
+                st.caption("Muestra qué características son más útiles para dividir nodos. Mayor = más importante.")
                 
-                # RULES DISPLAY
-                st.markdown("#### 📜 Extracted Rules (Top 10)")
-                st.info("These are IF-THEN rules extracted from the tree. Ranked by combined score (support × confidence × simplicity).")
+                # RULES DISPLAY - TWO COLUMNS
+                st.markdown("#### 📜 Reglas Extraídas (Top 10)")
+                st.info(f"""
+                🔍 **Interpretación del Soporte**: 
+                - Soporte = número de estudiantes del **train set** ({len(X_train)} estudiantes) que cumplen esta regla específica
+                - Confianza = % de estudiantes en el nodo hoja que pertenecen a la clase predicha
+                - Profundidad = número de condiciones en la regla (menor = más simple)
+                """)
+                
+                # Split rules into two columns (5 + 5)
+                col_rules1, col_rules2 = st.columns(2)
                 
                 for idx, rule in enumerate(ranked_rules[:10], 1):
-                    with st.expander(f"Rule #{idx}: {rule['prediction']} (Support: {rule['support']}, Confidence: {rule['confidence']:.2f})"):
-                        st.markdown(f"**IF** {rule['conditions']}")
-                        st.markdown(f"**THEN** predict: **{rule['prediction']}**")
-                        st.markdown(f"- Support: {rule['support']} students ({rule['support_pct']:.1f}%)")
-                        st.markdown(f"- Confidence: {rule['confidence']:.3f}")
-                        st.markdown(f"- Depth: {rule['depth']} conditions")
-                        st.json(rule['class_distribution'])
+                    # Alternate between columns
+                    target_col = col_rules1 if idx <= 5 else col_rules2
+                    
+                    with target_col:
+                        with st.expander(f"#{idx}: {rule['prediction']} (Soporte: {rule['support']}, Conf: {rule['confidence']:.2f})"):
+                            st.markdown(f"**SI** {rule['conditions']}")
+                            st.markdown(f"**ENTONCES** → **{rule['prediction']}**")
+                            st.markdown(f"- 📊 Soporte: {rule['support']} estudiantes ({rule['support_pct']:.1f}% del train set)")
+                            st.markdown(f"- 🎯 Confianza: {rule['confidence']:.3f} ({rule['confidence']*100:.1f}% precisión)")
+                            st.markdown(f"- 🔢 Profundidad: {rule['depth']} condiciones")
+                            
+                            # Show class distribution in a more readable format
+                            st.markdown("**Distribución en el nodo:**")
+                            dist_df = pd.DataFrame(list(rule['class_distribution'].items()), columns=['Clase', 'Cantidad'])
+                            st.dataframe(dist_df, hide_index=True, width="stretch")
                 
             except Exception as e:
                 st.error(f"❌ Error training model: {str(e)}")
