@@ -10,7 +10,7 @@ from pathlib import Path
 import sys
 from ui.state_manager import init_state, get_state, set_state, StateKeys
 from data.loader import load_dataset
-from constants import FEATURE_CATEGORIES, FEATURE_DESCRIPTIONS
+from constants.base import FEATURE_CATEGORIES, FEATURE_DESCRIPTIONS
 
 # Add project root to path
 project_root = Path(__file__).parent

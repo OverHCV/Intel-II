@@ -17,7 +17,7 @@ from data.transformer import engineer_target, remove_leakage_features, split_fea
 from data.preprocessor import encode_categorical, scale_numerical
 from data.balancer import balance_classes
 from ui.state_manager import get_state, set_state, StateKeys
-from constants import FEATURE_DESCRIPTIONS, FEATURE_SHORT_NAMES, get_feature_description
+from constants.base import FEATURE_DESCRIPTIONS, FEATURE_SHORT_NAMES, get_feature_description
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +127,31 @@ def render():
         
         st.markdown("---")
         
+        # G1/G2 Inclusion Section - NEW!
+        st.subheader("📊 Data Leakage Control (G1/G2)")
+        st.warning("⚠️ G1 y G2 predicen G3 casi perfectamente (~90%+ accuracy). Incluirlos causa **data leakage** pero permite ver el impacto.")
+        
+        col_g1, col_g2, col_g3 = st.columns(3)
+        with col_g1:
+            include_g1 = st.checkbox(
+                "Include G1 (Nota Periodo 1)", 
+                value=False,
+                help="Incluir G1 mejora accuracy dramáticamente pero causa data leakage. Útil para comparación experimental."
+            )
+        with col_g2:
+            include_g2 = st.checkbox(
+                "Include G2 (Nota Periodo 2)", 
+                value=False,
+                help="Incluir G2 mejora accuracy dramáticamente pero causa data leakage. Útil para comparación experimental."
+            )
+        with col_g3:
+            if include_g1 or include_g2:
+                st.metric("⚠️ Data Leakage", "ACTIVO", delta="Cuidado!")
+            else:
+                st.metric("✅ Clean Data", "ACTIVO", delta="Sin leakage")
+        
+        st.markdown("---")
+        
         # Action button - ALWAYS process when parameters change
         # Auto-trigger processing
         process_data = True  # Always process on page load
@@ -149,8 +174,21 @@ def render():
                     }
                     y = engineer_target(df_raw, target_map.get(target_type, "binary"))
                     
-                    # 3. Remove leakage features
-                    df_clean = remove_leakage_features(df_raw)
+                    # 3. Remove leakage features (conditional on toggles)
+                    features_to_remove = []
+                    if not include_g1:
+                        features_to_remove.append("G1")
+                    if not include_g2:
+                        features_to_remove.append("G2")
+                    
+                    if features_to_remove:
+                        df_clean = remove_leakage_features(df_raw, features_to_remove=features_to_remove)
+                    else:
+                        # Keep all features except dataset_source
+                        df_clean = remove_leakage_features(df_raw, features_to_remove=["dataset_source"])
+                    
+                    # Log what features were removed
+                    logger.info(f"Removed features: {features_to_remove if features_to_remove else ['dataset_source only']}")
                     
                     # 4. Split X and y
                     X, _ = split_features_target(df_clean.assign(target=y), "target")
@@ -161,7 +199,7 @@ def render():
                     # 6. Scale numerical
                     X_scaled, scalers = scale_numerical(X_encoded, method="standard")
                     
-                    # 7. Apply balancing
+                    # 7. Apply balancing (CRITICAL: use the engineered y, not raw!)
                     balance_map = {
                         "SMOTE": "smote",
                         "None": "none",
@@ -169,10 +207,13 @@ def render():
                         "Random Undersample": "random_under"
                     }
                     X_final, y_final = balance_classes(
-                        X_scaled, y,
+                        X_scaled, y,  # y is the engineered target from step 2
                         method=balance_map[balance_method],
                         random_state=42
                     )
+                    
+                    # Verify balancing worked
+                    logger.info(f"Final shapes after balancing: X={X_final.shape}, y={len(y_final)}")
                     
                     # Store in session state
                     set_state(StateKeys.RAW_DATA, df_raw)

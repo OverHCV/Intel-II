@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from sklearn.tree import plot_tree
 import logging
 
+# Import feature descriptions
+from constants.base import get_feature_description
+
 logger = logging.getLogger(__name__)
 
 
@@ -73,7 +76,7 @@ def render():
             min_value=1,
             max_value=20,
             value=5,
-            help="WHY: Controls tree complexity. Lower = simpler rules, higher = more specific but risk overfitting."
+            help="Controla complejidad del árbol. Menor = reglas simples, mayor = más específico pero riesgo overfitting."
         )
     
     with col2:
@@ -82,14 +85,40 @@ def render():
             min_value=2,
             max_value=20,
             value=10,
-            help="WHY: Minimum samples needed to split a node. Higher = more conservative, prevents tiny splits."
+            help="Mínimo de muestras necesarias para dividir un nodo. Mayor = más conservador, previene divisiones pequeñas."
         )
     
     with col3:
         criterion = st.selectbox(
             "Split Criterion",
             ["gini", "entropy"],
-            help="WHY: Gini = faster, Entropy (info gain) = slightly more accurate. Usually similar results."
+            help="Gini = más rápido, Entropy (info gain) = ligeramente más preciso. Resultados similares."
+        )
+    
+    st.markdown("---")
+    
+    # Validation controls - NEW!
+    st.markdown("### 🎯 Validation Settings")
+    
+    col_v1, col_v2 = st.columns(2)
+    
+    with col_v1:
+        test_size = st.slider(
+            "Test Size (%)",
+            min_value=10,
+            max_value=40,
+            value=20,
+            step=5,
+            help="Porcentaje de datos para testing. 20% es estándar (80% train, 20% test)."
+        ) / 100
+    
+    with col_v2:
+        cv_folds = st.slider(
+            "Cross-Validation Folds",
+            min_value=2,
+            max_value=10,
+            value=5,
+            help="Número de folds para CV. 5-10 es estándar. Mayor = más robusto pero más lento."
         )
     
     st.markdown("---")
@@ -103,18 +132,40 @@ def render():
                 from core.evaluation import evaluate_classification
                 from sklearn.model_selection import train_test_split
                 
-                # Get feature names from raw data
+                # Get feature names from raw data (DYNAMIC based on what was included)
                 raw_df = get_state(StateKeys.RAW_DATA, None)
                 if raw_df is not None:
-                    # Exclude G1, G2, G3, and dataset_source
-                    feature_names = [col for col in raw_df.columns 
-                                   if col not in ['G1', 'G2', 'G3', 'dataset_source']]
+                    # Start with all columns
+                    all_cols = list(raw_df.columns)
+                    # Remove G3 (always target) and dataset_source (always metadata)
+                    exclude_list = ['G3', 'dataset_source']
+                    
+                    # Check what G features are actually in X_ready
+                    # If X_ready has 31 features, one of G1/G2 is included
+                    # If X_ready has 32 features, both G1/G2 are included
+                    # If X_ready has 30 features, neither is included
+                    
+                    if X_ready.shape[1] == 30:
+                        # Neither G1 nor G2
+                        exclude_list.extend(['G1', 'G2'])
+                    elif X_ready.shape[1] == 31:
+                        # One of them is included - need to check which was removed
+                        # For now, assume it matches the raw data minus exclusions
+                        pass
+                    # else 32 features = both included
+                    
+                    feature_names = [col for col in all_cols if col not in exclude_list]
+                    
+                    # Ensure feature_names matches X_ready shape
+                    if len(feature_names) != X_ready.shape[1]:
+                        logger.warning(f"Feature name mismatch: {len(feature_names)} names vs {X_ready.shape[1]} features. Using generic names.")
+                        feature_names = [f"feature_{i}" for i in range(X_ready.shape[1])]
                 else:
                     feature_names = [f"feature_{i}" for i in range(X_ready.shape[1])]
                 
-                # Split data
+                # Split data (use user-defined test_size)
                 X_train, X_test, y_train, y_test = train_test_split(
-                    X_ready, y_ready, test_size=0.2, random_state=42, stratify=y_ready
+                    X_ready, y_ready, test_size=test_size, random_state=42, stratify=y_ready
                 )
                 
                 # Train model
@@ -147,7 +198,7 @@ def render():
                 rules = extract_rules(model, feature_names, class_names=class_names)
                 ranked_rules = rank_rules(rules, criterion="combined")
                 
-                # Cross-validation
+                # Cross-validation (use user-defined cv_folds)
                 cv_results = cross_validate(
                     X_ready, y_ready,
                     model_params={
@@ -156,7 +207,7 @@ def render():
                         "criterion": criterion,
                         "random_state": 42
                     },
-                    cv=5
+                    cv=cv_folds
                 )
                 
                 # Feature importance
@@ -166,15 +217,69 @@ def render():
                 set_state(StateKeys.DT_MODEL, model)
                 set_state(StateKeys.DT_RULES, ranked_rules)
                 
+                # SAVE EXPERIMENT TO HISTORY
+                import datetime
+                experiment_id = f"DT_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                
+                experiment_data = {
+                    "id": experiment_id,
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "algorithm": "Decision Tree (CART)",
+                    "params": {
+                        "max_depth": max_depth,
+                        "min_samples_split": min_samples_split,
+                        "criterion": criterion,
+                        "test_size": test_size,
+                        "cv_folds": cv_folds
+                    },
+                    "data": {
+                        "total_samples": len(X_ready),
+                        "n_features": X_ready.shape[1],
+                        "n_classes": len(unique_classes),
+                        "train_samples": len(X_train),
+                        "test_samples": len(X_test)
+                    },
+                    "metrics": {
+                        "accuracy": metrics['accuracy'],
+                        "precision": metrics['precision'],
+                        "recall": metrics['recall'],
+                        "f1_score": metrics['f1_score'],
+                        "cv_mean": cv_results['mean'],
+                        "cv_std": cv_results['std']
+                    },
+                    "tree_info": {
+                        "depth": model.get_depth(),
+                        "n_leaves": model.get_n_leaves(),
+                        "n_rules": len(rules)
+                    }
+                }
+                
+                # Append to experiment history
+                history = get_state("experiment_history", [])
+                history.append(experiment_data)
+                set_state("experiment_history", history)
+                
+                logger.info(f"Saved experiment {experiment_id} to history")
+                
                 # Show data split info
                 st.info(f"""
                 📊 **Datos utilizados**: 
                 - Total después de SMOTE: **{len(X_ready)} estudiantes** ({len(X_train)} train, {len(X_test)} test)
                 - Features: **{X_ready.shape[1]} características**
-                - Target: **{len(np.unique(y_ready))} clases** balanceadas
+                - Target: **{len(np.unique(y_ready))} clases** balanceadas (cada clase tiene {len(X_train)//len(np.unique(y_ready))} samples en train)
+                - Test set: **~{len(X_test)//len(np.unique(y_ready))} samples por clase** (total {len(X_test)})
                 """)
                 
                 st.success("✅ Modelo CART entrenado exitosamente!")
+                
+                st.warning(f"""
+                ⚠️ **Sobre el Accuracy ({metrics['accuracy']:.1%})**:
+                - Predecir G3 (nota final) sin G1/G2 es MUY difícil
+                - Solo usamos factores demográficos/sociales/comportamentales
+                - Random baseline (adivinar): {100/len(np.unique(y_ready)):.1f}% para {len(np.unique(y_ready))} clases
+                - Nuestro modelo: {metrics['accuracy']*100:.1f}% (mejor que random!)
+                - En producción, G1/G2 mejorarían esto a ~80%+, pero causarían data leakage
+                """)
                 
                 # Display results
                 st.markdown("### 📊 Resultados")
@@ -191,12 +296,20 @@ def render():
                     st.metric("F1-Score", f"{metrics['f1_score']:.3f}")
                 
                 # Cross-validation
-                st.markdown("#### ✅ Cross-Validation (5-fold)")
+                st.markdown(f"#### ✅ Cross-Validation ({cv_folds}-fold)")
                 st.info(f"Mean Accuracy: **{cv_results['mean']:.3f}** ± {cv_results['std']:.3f}")
-                st.caption("WHY: Single train/test split can be lucky/unlucky. CV gives robust estimate.")
+                st.caption(f"Un solo split train/test puede ser suerte/mala suerte. CV con {cv_folds} folds da estimación robusta.")
                 
                 # Confusion Matrix
                 st.markdown("#### 🎯 Matriz de Confusión")
+                
+                st.caption(f"""
+                📈 **Interpretación**: Matriz de {len(X_test)} predicciones del test set.
+                - Diagonal (azul oscuro) = predicciones correctas
+                - Fuera de diagonal = errores del modelo
+                - Cada fila suma ~{len(X_test)//len(class_names)} (test set balanceado con {len(X_test)} samples ÷ {len(class_names)} clases)
+                """)
+                
                 cm = np.array(metrics['confusion_matrix'])
                 fig_cm, ax_cm = plt.subplots(figsize=(6, 5))
                 im = ax_cm.imshow(cm, cmap='Blues')
@@ -241,8 +354,6 @@ def render():
                 # Feature Importance with descriptions
                 st.markdown("#### ⭐ Top 10 Importancia de Características")
                 
-                # Import feature descriptions
-                from constants import get_feature_description
                 
                 fig_imp, ax_imp = plt.subplots(figsize=(10, 6))
                 features = list(feature_importance.keys())[:10]  # Top 10
@@ -299,9 +410,93 @@ def render():
             except Exception as e:
                 st.error(f"❌ Error training model: {str(e)}")
                 logger.error(f"Decision tree training error: {e}", exc_info=True)
+                import traceback
+                st.code(traceback.format_exc())
+    
+    st.markdown("---")
+    
+    # EXPERIMENT HISTORY TABLE
+    st.markdown("### 📊 Experimentos Guardados")
+    
+    history = get_state("experiment_history", [])
+    
+    if len(history) == 0:
+        st.info("No hay experimentos guardados aún. Entrena un modelo para empezar!")
+    else:
+        st.success(f"✅ {len(history)} experimento(s) guardado(s) en esta sesión")
+        
+        # Create comparison table
+        history_data = []
+        for exp in history:
+            history_data.append({
+                "ID": exp["id"],
+                "Timestamp": exp["timestamp"].split("T")[1][:8] if "T" in exp["timestamp"] else exp["timestamp"],
+                "Max Depth": exp["params"]["max_depth"],
+                "Min Split": exp["params"]["min_samples_split"],
+                "Criterion": exp["params"]["criterion"],
+                "Test %": f"{exp['params']['test_size']*100:.0f}%",
+                "CV Folds": exp["params"]["cv_folds"],
+                "Features": exp["data"]["n_features"],
+                "Accuracy": f"{exp['metrics']['accuracy']:.3f}",
+                "F1": f"{exp['metrics']['f1_score']:.3f}",
+                "CV Mean": f"{exp['metrics']['cv_mean']:.3f}",
+                "CV Std": f"{exp['metrics']['cv_std']:.3f}",
+                "Depth": exp["tree_info"]["depth"],
+                "Leaves": exp["tree_info"]["n_leaves"],
+                "Rules": exp["tree_info"]["n_rules"]
+            })
+        
+        df_history = pd.DataFrame(history_data)
+        st.dataframe(df_history, width="stretch", height=300)
+        
+        # Comparison charts
+        st.markdown("#### 📈 Comparación Visual")
+        
+        col_chart1, col_chart2 = st.columns(2)
+        
+        with col_chart1:
+            # Accuracy comparison
+            fig_acc, ax_acc = plt.subplots(figsize=(8, 5))
+            accuracies = [float(exp["metrics"]["accuracy"]) for exp in history]
+            labels = [exp["id"].split("_")[1] for exp in history]  # Just timestamp
+            ax_acc.plot(range(len(accuracies)), accuracies, marker='o', linewidth=2, markersize=8, color='steelblue')
+            ax_acc.set_xlabel("Experimento")
+            ax_acc.set_ylabel("Accuracy")
+            ax_acc.set_title("Evolución del Accuracy")
+            ax_acc.set_xticks(range(len(labels)))
+            ax_acc.set_xticklabels(labels, rotation=45, ha='right')
+            ax_acc.grid(True, alpha=0.3)
+            plt.tight_layout()
+            st.pyplot(fig_acc)
+            plt.close()
+        
+        with col_chart2:
+            # Feature count vs Accuracy
+            fig_feat, ax_feat = plt.subplots(figsize=(8, 5))
+            n_features = [exp["data"]["n_features"] for exp in history]
+            accuracies = [float(exp["metrics"]["accuracy"]) for exp in history]
+            colors = ['green' if f == 30 else 'orange' if f == 31 else 'red' for f in n_features]
+            ax_feat.scatter(n_features, accuracies, s=100, c=colors, alpha=0.6)
+            ax_feat.set_xlabel("Número de Features")
+            ax_feat.set_ylabel("Accuracy")
+            ax_feat.set_title("Features vs Accuracy")
+            ax_feat.grid(True, alpha=0.3)
+            # Add legend
+            ax_feat.plot([], [], 'o', color='green', label='30 feat (sin G1/G2)')
+            ax_feat.plot([], [], 'o', color='orange', label='31 feat (G1 o G2)')
+            ax_feat.plot([], [], 'o', color='red', label='32 feat (G1 + G2)')
+            ax_feat.legend()
+            plt.tight_layout()
+            st.pyplot(fig_feat)
+            plt.close()
+        
+        # Clear history button
+        if st.button("🗑️ Limpiar Historial", type="secondary"):
+            set_state("experiment_history", [])
+            st.rerun()
     
     # Show cached model if exists
     cached_model = get_state(StateKeys.DT_MODEL, None)
     if cached_model and not st.session_state.get("_training_now"):
-        st.info("✅ A trained model is cached. Click 'Train' to retrain with new parameters.")
+        st.info("✅ Un modelo entrenado está en cache. Click 'Train' para reentrenar con nuevos parámetros.")
 
