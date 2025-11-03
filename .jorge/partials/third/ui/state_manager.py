@@ -122,11 +122,24 @@ def get_or_compute(
 class StateKeys:
     """Centralized state key definitions."""
     
+    # Page navigation
+    CURRENT_PAGE = "current_page"
+    
     # Data keys
     DATASET_NAME = "dataset_name"
     RAW_DATA = "raw_data"
     PROCESSED_DATA = "processed_data"
     DATA_METADATA = "data_metadata"
+    TARGET_STRATEGY = "target_strategy"
+    BALANCE_METHOD = "balance_method"
+    X_PREPARED = "X_prepared"
+    Y_PREPARED = "y_prepared"
+    
+    # Model keys
+    DT_MODEL = "dt_model"
+    DT_RULES = "dt_rules"
+    HC_LABELS = "hc_labels"
+    KM_LABELS = "km_labels"
     
     # Model keys  
     CURRENT_MODEL = "current_model"

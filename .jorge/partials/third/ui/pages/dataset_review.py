@@ -9,12 +9,22 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import logging
+
+# ALL IMPORTS AT TOP - NO LAZY IMPORTS!
+from data.loader import load_dataset
+from data.transformer import engineer_target, remove_leakage_features, split_features_target
+from data.preprocessor import encode_categorical, scale_numerical
+from data.balancer import balance_classes
+from ui.state_manager import get_state, set_state, StateKeys
+
+logger = logging.getLogger(__name__)
 
 
 def render():
     """Render the Dataset Review page."""
     
-    # THEORY SECTION - Always at the top of every page
+    # THEORY FIRST - As requested
     with st.expander("📚 THEORY: Why Data Preparation is Critical", expanded=False):
         st.markdown("""
         ### "Garbage In, Garbage Out"
@@ -84,9 +94,9 @@ def render():
         st.subheader("🎯 Target Engineering")
         target_strategy = st.selectbox(
             "G3 Transformation",
-            ["Binary (Pass/Fail at 10)",
+            ["Five-class (A/B/C/D/F)",
+            "Binary (Pass/Fail at 10)",
              "Three-class (Low/Med/High)",
-             "Five-class (A/B/C/D/F)",
              "Custom thresholds"],
             help="WHY: Binary (Pass/Fail) is simple and actionable. Multi-class enables finer interventions (e.g., 'Medium' students need different support than 'Low')."
         )
@@ -104,8 +114,8 @@ def render():
         st.subheader("⚖️ Class Balancing")
         balance_method = st.selectbox(
             "Balancing Method",
-            ["None", "SMOTE", "Random Oversample", "Random Undersample"],
-            help="WHY: None if balanced. SMOTE creates synthetic examples (best). Random Oversample duplicates (simpler but less diverse). Random Undersample reduces majority (loses data)."
+            ["SMOTE", "None", "Random Oversample", "Random Undersample"],
+            help="WHY: SMOTE (default) creates synthetic examples (best for imbalanced data). None if already balanced. Random Oversample duplicates. Random Undersample loses data."
         )
         
         if balance_method == "SMOTE":
@@ -116,14 +126,68 @@ def render():
         
         st.markdown("---")
         
-        # Action buttons
-        if st.button("🔄 Load & Prepare Data", type="primary", use_container_width=True):
-            with st.spinner("🌀 Processing data..."):
-                st.session_state["data_loaded"] = True
-                st.success("✅ Data prepared successfully!")
+        # Action button - ALWAYS process when parameters change
+        # Auto-trigger processing
+        process_data = True  # Always process on page load
         
-        if st.button("💾 Save Snapshot", use_container_width=True):
-            st.info("WIP: Save prepared dataset to sandbox/snapshots/")
+        if process_data:
+            with st.spinner("🌀 Processing data..."):
+                try:
+                    # All imports are at the top now!
+                    
+                    # 1. Load dataset
+                    dataset_choice = dataset.split(" ")[0].lower()  # "Portuguese" or "Math"
+                    df_raw = load_dataset(dataset_choice)
+                    
+                    # 2. Engineer target
+                    target_type = target_strategy.split(" ")[0].lower()  # "binary", "three-class", etc.
+                    target_map = {
+                        "binary": "binary",
+                        "three-class": "three_class",
+                        "five-class": "five_class"
+                    }
+                    y = engineer_target(df_raw, target_map.get(target_type, "binary"))
+                    
+                    # 3. Remove leakage features
+                    df_clean = remove_leakage_features(df_raw)
+                    
+                    # 4. Split X and y
+                    X, _ = split_features_target(df_clean.assign(target=y), "target")
+                    
+                    # 5. Encode categorical
+                    X_encoded, encoders = encode_categorical(X, method="label")
+                    
+                    # 6. Scale numerical
+                    X_scaled, scalers = scale_numerical(X_encoded, method="standard")
+                    
+                    # 7. Apply balancing
+                    balance_map = {
+                        "SMOTE": "smote",
+                        "None": "none",
+                        "Random Oversample": "random_over",
+                        "Random Undersample": "random_under"
+                    }
+                    X_final, y_final = balance_classes(
+                        X_scaled, y,
+                        method=balance_map[balance_method],
+                        random_state=42
+                    )
+                    
+                    # Store in session state
+                    set_state(StateKeys.RAW_DATA, df_raw)
+                    set_state(StateKeys.X_PREPARED, X_final)
+                    set_state(StateKeys.Y_PREPARED, y_final)
+                    set_state(StateKeys.DATASET_NAME, dataset.split(" ")[0])
+                    set_state(StateKeys.TARGET_STRATEGY, target_strategy.split(" ")[0])
+                    set_state(StateKeys.BALANCE_METHOD, balance_method)
+                    
+                    st.session_state["data_loaded"] = True
+                    st.success(f"✅ Data prepared: {X_final.shape[0]} samples, {X_final.shape[1]} features!")
+                    
+                except Exception as e:
+                    st.error(f"❌ Error preparing data: {str(e)}")
+                    import traceback
+                    st.code(traceback.format_exc())
         
         # Feature selection info
         st.markdown("---")
@@ -132,66 +196,85 @@ def render():
     with col2:
         st.subheader("📈 Data Visualization")
         
-        if st.session_state.get("data_loaded"):
-            # Dummy data for visualization
+        X_viz = get_state(StateKeys.X_PREPARED, None)
+        y_viz = get_state(StateKeys.Y_PREPARED, None)
+        
+        if X_viz is not None and y_viz is not None:
+            # REAL data visualization
             tabs = st.tabs(["Class Distribution", "Feature Correlation", "Summary Stats"])
             
             with tabs[0]:
-                st.markdown("""
-                **Class Distribution Analysis**
+                # REAL Class distribution
+                fig, ax = plt.subplots(figsize=(8, 5))
+                unique, counts = np.unique(y_viz, return_counts=True)
+                colors = plt.cm.Set3(np.linspace(0, 1, len(unique)))
+                ax.bar([f"Class {u}" for u in unique], counts, color=colors)
+                ax.set_ylabel("Number of Students")
+                ax.set_title(f"Class Distribution (After {balance_method})")
+                ax.set_ylim(0, max(counts) * 1.2)
                 
-                WHY: Imbalanced classes lead to biased models that predict
-                     majority class excessively. Balancing ensures fair representation.
-                """)
+                # Add count labels
+                for i, v in enumerate(counts):
+                    ax.text(i, v + max(counts)*0.02, str(v), ha='center', fontweight='bold')
                 
-                # Dummy distribution chart
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-                
-                # Before balancing
-                classes = ['Pass', 'Fail']
-                counts_before = [280, 115]
-                ax1.bar(classes, counts_before, color=['#4CAF50', '#F44336'])
-                ax1.set_title('Before Balancing')
-                ax1.set_ylabel('Count')
-                for i, v in enumerate(counts_before):
-                    ax1.text(i, v + 5, str(v), ha='center', fontweight='bold')
-                
-                # After balancing
-                counts_after = [280, 280]
-                ax2.bar(classes, counts_after, color=['#4CAF50', '#F44336'])
-                ax2.set_title('After SMOTE')
-                ax2.set_ylabel('Count')
-                for i, v in enumerate(counts_after):
-                    ax2.text(i, v + 5, str(v), ha='center', fontweight='bold')
-                
-                plt.tight_layout()
                 st.pyplot(fig)
+                plt.close()
                 
-                st.metric("Imbalance Ratio", "2.43 → 1.00", "✅ Balanced")
+                imbalance_ratio = max(counts) / min(counts) if len(counts) > 1 else 1.0
+                st.caption(f"Imbalance ratio: {imbalance_ratio:.2f}. WHY: Ratio > 2.0 means one class dominates → model bias")
             
             with tabs[1]:
-                st.markdown("""
-                **Feature Correlation Matrix**
+                # REAL Correlation heatmap
+                st.markdown("#### 🔥 Feature Correlation Matrix")
                 
-                WIP: Heatmap showing correlations between features.
-                WHY: Identify multicollinearity and feature relationships.
-                """)
-                st.info("Correlation heatmap will appear here")
+                # Compute correlation
+                corr_matrix = pd.DataFrame(X_viz).corr()
+                
+                # Plot heatmap
+                fig_corr, ax_corr = plt.subplots(figsize=(12, 10))
+                im = ax_corr.imshow(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1, aspect='auto')
+                
+                # Add colorbar
+                cbar = plt.colorbar(im, ax=ax_corr)
+                cbar.set_label("Correlation Coefficient", rotation=270, labelpad=20)
+                
+                # Set ticks (show every 5th feature to avoid clutter)
+                n_features = corr_matrix.shape[0]
+                tick_positions = list(range(0, n_features, max(1, n_features // 10)))
+                ax_corr.set_xticks(tick_positions)
+                ax_corr.set_yticks(tick_positions)
+                ax_corr.set_xticklabels([f"F{i}" for i in tick_positions], rotation=45)
+                ax_corr.set_yticklabels([f"F{i}" for i in tick_positions])
+                
+                ax_corr.set_title("Feature Correlation Heatmap", fontsize=14, pad=20)
+                plt.tight_layout()
+                st.pyplot(fig_corr)
+                plt.close()
+                
+                st.caption("💡 Red = positive correlation, Blue = negative. Dark colors = strong correlation. WHY: High correlation (>0.9) = redundant features.")
+                
+                # Show top correlations
+                corr_pairs = []
+                for i in range(n_features):
+                    for j in range(i+1, n_features):
+                        corr_pairs.append((i, j, abs(corr_matrix.iloc[i, j])))
+                corr_pairs.sort(key=lambda x: x[2], reverse=True)
+                
+                if corr_pairs:
+                    st.markdown("**Top 5 Correlated Feature Pairs:**")
+                    for i, j, corr in corr_pairs[:5]:
+                        st.text(f"Feature {i} ⋈ Feature {j}: {corr:.3f}")
             
             with tabs[2]:
-                st.markdown("""
-                **Dataset Summary Statistics**
-                """)
-                # Dummy summary
-                summary_data = {
-                    "Feature": ["age", "studytime", "failures", "absences", "G3"],
-                    "Mean": [16.7, 2.0, 0.3, 5.7, 10.4],
-                    "Std": [1.3, 0.8, 0.8, 8.0, 4.6],
-                    "Min": [15, 1, 0, 0, 0],
-                    "Max": [22, 4, 3, 75, 20]
-                }
-                st.dataframe(pd.DataFrame(summary_data), use_container_width=True)
+                # REAL Summary statistics
+                st.markdown("#### 📊 Feature Statistics")
+                df_stats = pd.DataFrame(X_viz)
+                summary = df_stats.describe().T
+                summary['Feature'] = [f"Feature_{i}" for i in range(len(summary))]
+                summary = summary[['Feature', 'mean', 'std', 'min', 'max']]
+                summary.columns = ['Feature', 'Mean', 'Std Dev', 'Min', 'Max']
+                st.dataframe(summary, use_container_width=True, height=400)
         
         else:
-            st.info("👆 Click 'Load & Prepare Data' to visualize the dataset")
+            st.info("Processing data... Visualizations will appear automatically")
 

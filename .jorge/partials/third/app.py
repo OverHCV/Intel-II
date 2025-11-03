@@ -64,95 +64,166 @@ for col, (emoji, page_name) in zip(nav_cols, nav_options):
 
 st.markdown("---")
 
-# Sidebar info (collapsed by default)
+# Sidebar - App State (NOT project status)
 with st.sidebar:
-    st.markdown("### 📁 Active Dataset")
-    dataset_name = get_state(StateKeys.DATASET_NAME, "None loaded")
-    st.info(dataset_name)
+    st.markdown("### 📊 App State")
     
-    st.markdown("### 🎯 Development Progress")
-    st.progress(0.2, text="Phase 1: BFS Complete")
+    # Dataset info
+    dataset_loaded = get_state(StateKeys.DATASET_NAME, None)
+    if dataset_loaded:
+        st.success(f"✅ Dataset: {dataset_loaded}")
+        
+        # Show preprocessing state
+        target_strategy = get_state(StateKeys.TARGET_STRATEGY, "Not set")
+        st.info(f"🎯 Target: {target_strategy}")
+        
+        balance_method = get_state(StateKeys.BALANCE_METHOD, "None")
+        st.info(f"⚖️ Balance: {balance_method}")
+        
+        # Show if data is prepared
+        X_ready = get_state(StateKeys.X_PREPARED, None)
+        y_ready = get_state(StateKeys.Y_PREPARED, None)
+        if X_ready is not None and y_ready is not None:
+            st.success(f"✅ Data Ready: {X_ready.shape[0]} samples")
+        else:
+            st.warning("⏳ Data not prepared")
+    else:
+        st.warning("⚠️ No dataset loaded")
+        st.caption("Go to Dataset Review to load data")
     
-    st.markdown("### ℹ️ About")
-    st.markdown("""
-    **Architecture**: 4-Layer  
-    **Approach**: BFS (Skeleton-first)  
-    **Status**: Navigable prototype
-    """)
+    st.markdown("---")
+    
+    # Model state
+    st.markdown("### 🤖 Models")
+    dt_trained = get_state(StateKeys.DT_MODEL, None)
+    if dt_trained:
+        st.success("✅ Decision Tree trained")
+    else:
+        st.info("⏳ Decision Tree pending")
+    
+    hc_done = get_state(StateKeys.HC_LABELS, None)
+    if hc_done:
+        st.success("✅ Hierarchical done")
+    else:
+        st.info("⏳ Hierarchical pending")
+    
+    km_done = get_state(StateKeys.KM_LABELS, None)
+    if km_done:
+        st.success("✅ K-means done")
+    else:
+        st.info("⏳ K-means pending")
 
 # Route to appropriate page content
 if current_page == "Home":
     st.markdown("""
-    ## 🏠 Welcome to Student Performance Analysis
+    ## 📚 Tercer Examen Parcial - Sistemas Inteligentes II
     
-    This application provides comprehensive ML analysis of student data using
-    **classification** (Decision Trees) and **clustering** (Hierarchical, K-means).
+    ### Universidad de Caldas
+    
+    Este proyecto utiliza el dataset de rendimiento estudiantil del 
+    [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/index.php) 
+    para aplicar técnicas de aprendizaje de máquina supervisado y no supervisado.
+    
+    ---
     """)
     
-    with st.expander("📚 THEORY: Why This Project Matters", expanded=False):
-        st.markdown("""
-        ### Educational Context
-        
-        **WHY ML in Education?**
-        - Early identification of at-risk students
-        - Personalized intervention strategies
-        - Understanding factors that influence success
-        - Data-driven educational policy
-        
-        ### Datasets
-        
-        - **Portuguese Dataset**: 649 students → **TRAINING SET** (more samples)
-        - **Math Dataset**: 395 students → **TEST SET** (cross-domain validation)
-        - **Features**: 33 attributes (demographic, social, school-related)
-        - **Target**: G3 score (0-20) → categorical transformation
-        
-        ### Approach
-        
-        1. Train on Portuguese (larger dataset)
-        2. Test on Math (different subject - tests generalization)
-        3. Reflect: Do patterns transfer across subjects?
-        """)
+    # Exam Requirements
+    st.markdown("### 📋 Requisitos del Examen")
     
-    st.markdown("### 🎯 Project Objectives")
+    # Task 1 - Decision Trees
+    with st.container():
+        col_icon, col_content = st.columns([0.1, 0.9])
+        with col_icon:
+            st.markdown("### 🌳")
+        with col_content:
+            st.markdown("""
+            **Tarea 1 (0.9 puntos): Árbol de Decisión CART**
+            
+            Entrenar un modelo CART o C4.5/ID3 para obtener un árbol de decisión y generar 
+            reglas explícitas de clasificación. Analizar las reglas obtenidas, identificar 
+            las más útiles (por pureza, cobertura y simplicidad), y realizar validación cruzada.
+            """)
+            st.progress(0.2, text="En desarrollo - Fase 1")
     
-    col1, col2 = st.columns(2)
+    st.markdown("---")
     
+    # Task 2 - Hierarchical Clustering
+    with st.container():
+        col_icon, col_content = st.columns([0.1, 0.9])
+        with col_icon:
+            st.markdown("### 🔗")
+        with col_content:
+            st.markdown("""
+            **Tarea 2 (0.9 puntos): Clustering Jerárquico**
+            
+            Usar el algoritmo de clustering jerárquico con los diferentes criterios de 
+            enlazamiento (linkage) para agrupar los datos. Usando el criterio J4, analizar 
+            los diferentes puntos de corte para el agrupamiento.
+            """)
+            st.progress(0.15, text="Pendiente - Fase 2")
+    
+    st.markdown("---")
+    
+    # Task 3 - K-means
+    with st.container():
+        col_icon, col_content = st.columns([0.1, 0.9])
+        with col_icon:
+            st.markdown("### ⭕")
+        with col_content:
+            st.markdown("""
+            **Tarea 3 (0.7 puntos): K-means**
+            
+            Usando el número óptimo de clusters encontrado en el punto anterior, usar el 
+            algoritmo k-means y evaluar nuevamente usando el criterio J4. Comparar con 
+            clustering jerárquico.
+            """)
+            st.progress(0.1, text="Pendiente - Fase 3")
+    
+    st.markdown("---")
+    
+    # Task 4 - Presentation
+    with st.container():
+        col_icon, col_content = st.columns([0.1, 0.9])
+        with col_icon:
+            st.markdown("### 🎤")
+        with col_content:
+            st.markdown("""
+            **Tarea 4 (2.5 puntos): Sustentación Oral**
+            
+            Presentación oral en horario de clase con análisis de resultados y conclusiones.
+            """)
+            st.progress(0.0, text="Pendiente - Final")
+    
+    st.markdown("---")
+    
+    # Dataset Info
+    st.markdown("### 📊 Dataset: Student Performance")
+    
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("""
-        #### Classification (Decision Trees)
-        - **Build**: CART algorithm for pass/fail prediction
-        - **Extract**: Human-readable IF-THEN rules
-        - **Analyze**: Feature importance and rule ranking
-        - **Validate**: Cross-validation for robustness
-        
-        **WHY**: Teachers need interpretable models, not black boxes.
-        """)
-    
+        st.metric("Portuguese", "649 estudiantes", "Entrenamiento")
     with col2:
-        st.markdown("""
-        #### Clustering (Hierarchical & K-means)
-        - **Discover**: Natural student groupings
-        - **Compare**: Different linkage methods
-        - **Optimize**: Find optimal number of clusters (J4 criterion)
-        - **Profile**: Generate cluster descriptions
-        
-        **WHY**: Reveals hidden patterns classification might miss.
-        """)
+        st.metric("Math", "395 estudiantes", "Prueba cruzada")
+    with col3:
+        st.metric("Features", "33 atributos", "Mixtos")
     
-    st.markdown("### 🚀 Getting Started")
-    st.info("👆 Use the **horizontal navigation tabs above** to explore different analysis sections.")
+    st.info("""
+    **Estrategia**: Entrenar con Portuguese (mayor cantidad de datos), 
+    validar con Math (generalización entre materias).
+    """)
     
-    # Quick stats
-    st.markdown("### 📊 Architecture Overview")
-    metric_cols = st.columns(4)
-    with metric_cols[0]:
-        st.metric("Core Modules", "4", "ML algorithms")
-    with metric_cols[1]:
-        st.metric("Versioning", "3", "Experiment tracking")
-    with metric_cols[2]:
-        st.metric("UI Pages", "6", "Fully navigable")
-    with metric_cols[3]:
-        st.metric("Development", "BFS", "Skeleton-first")
+    # Getting Started
+    st.markdown("### 🚀 Comenzar")
+    
+    st.markdown("""
+    1. **📊 Dataset Review** → Explorar datos, balancear clases, ingeniar target
+    2. **🌳 Decision Trees** → Entrenar CART, extraer reglas, validación cruzada
+    3. **🔗 Hierarchical** → Dendrograma, diferentes linkages, análisis J4
+    4. **⭕ K-means** → Encontrar k óptimo, comparar con jerárquico
+    5. **📈 History** → Comparar experimentos, timeline de mejoras
+    """)
+    
+    # st.success("👆 **Usa la navegación ** para acceder a cada sección.")
 
 elif current_page == "Dataset Review":
     from ui.pages import dataset_review

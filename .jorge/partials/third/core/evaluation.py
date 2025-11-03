@@ -31,10 +31,10 @@ def calculate_j4_criterion(
     
     Formula: J4 = trace(Sw^-1 * Sb)
     where:
-        - Sw = within-cluster scatter matrix
-        - Sb = between-cluster scatter matrix
+        - Sw = within-cluster scatter matrix (dispersion within clusters)
+        - Sb = between-cluster scatter matrix (separation between clusters)
     
-    Higher J4 = better separated clusters
+    Higher J4 = better separated clusters (want high between, low within)
     
     Args:
         X: Feature matrix (n_samples, n_features)
@@ -42,33 +42,68 @@ def calculate_j4_criterion(
         
     Returns:
         J4 criterion value
+        
+    Raises:
+        ValueError: If Sw is singular (not invertible)
     """
-    # WIP: Implement full J4 calculation
-    # WHY: This is exam-critical - must match course definition exactly
-    
-    # Steps needed:
-    # 1. Calculate global mean vector
-    # 2. Calculate within-cluster scatter matrix Sw
-    #    Sw = sum over clusters of: sum over samples in cluster of: (x - cluster_mean)(x - cluster_mean)^T
-    # 3. Calculate between-cluster scatter matrix Sb
-    #    Sb = sum over clusters of: n_cluster * (cluster_mean - global_mean)(cluster_mean - global_mean)^T
-    # 4. Compute J4 = trace(inv(Sw) @ Sb)
-    
     n_samples, n_features = X.shape
     unique_labels = np.unique(labels)
     n_clusters = len(unique_labels)
     
-    # Global mean
-    global_mean = X.mean(axis=0).reshape(-1, 1)
+    # Step 1: Calculate global mean vector (d x 1)
+    global_mean = np.mean(X, axis=0).reshape(n_features, 1)
     
-    # Initialize scatter matrices
+    # Step 2: Initialize scatter matrices (d x d)
     Sw = np.zeros((n_features, n_features))
     Sb = np.zeros((n_features, n_features))
     
-    # WIP: Complete calculation
-    # Placeholder to prevent errors
-    logger.warning("J4 calculation not fully implemented - returning placeholder")
-    return 0.0
+    # Step 3: Calculate scatter matrices for each cluster
+    for label in unique_labels:
+        # Get samples belonging to this cluster
+        cluster_mask = (labels == label)
+        X_cluster = X[cluster_mask]
+        n_cluster = X_cluster.shape[0]
+        
+        if n_cluster == 0:
+            continue
+        
+        # Cluster mean (d x 1)
+        cluster_mean = np.mean(X_cluster, axis=0).reshape(n_features, 1)
+        
+        # Within-cluster scatter: sum of (x - mu_c)(x - mu_c)^T
+        for sample in X_cluster:
+            diff = sample.reshape(n_features, 1) - cluster_mean
+            Sw += diff @ diff.T
+        
+        # Between-cluster scatter: n_c * (mu_c - mu)(mu_c - mu)^T
+        diff_cluster = cluster_mean - global_mean
+        Sb += n_cluster * (diff_cluster @ diff_cluster.T)
+    
+    # Step 4: Calculate J4 = trace(inv(Sw) @ Sb)
+    # Add small regularization to prevent singular matrix
+    regularization = 1e-6 * np.eye(n_features)
+    Sw_reg = Sw + regularization
+    
+    try:
+        # Compute inverse of within-scatter
+        Sw_inv = np.linalg.inv(Sw_reg)
+        
+        # Compute J4 = trace(Sw^-1 * Sb)
+        j4_value = np.trace(Sw_inv @ Sb)
+        
+        logger.info(
+            f"J4 criterion calculated: {j4_value:.4f} "
+            f"({n_clusters} clusters, {n_samples} samples)"
+        )
+        
+        return float(j4_value)
+        
+    except np.linalg.LinAlgError:
+        logger.error("Sw matrix is singular, cannot compute J4")
+        raise ValueError(
+            "Within-cluster scatter matrix is singular. "
+            "This can happen with very few samples or degenerate clusters."
+        )
 
 
 def evaluate_classification(

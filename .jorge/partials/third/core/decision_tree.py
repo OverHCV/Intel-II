@@ -69,35 +69,82 @@ def extract_rules(
     WHY: Rules like "IF studytime <= 2 AND failures > 0 THEN predict Fail"
          are actionable insights for educators.
     
-    WIP: Full rule extraction with path tracing and support calculation.
-         Currently returns basic structure.
+    Implements recursive tree traversal to extract all root-to-leaf paths.
+    Each path becomes an IF-THEN rule with support and confidence metrics.
     
     Args:
         model: Trained decision tree
         feature_names: List of feature names
-        class_names: Optional class labels
+        class_names: Optional class labels (default: class_0, class_1, ...)
         
     Returns:
         List of rule dictionaries with conditions, predictions, support
     """
-    # WIP: Implement recursive tree traversal to extract all paths
-    # WHY: Need to traverse from root to each leaf to build IF-THEN rules
-    
     tree = model.tree_
     rules = []
     
-    # Placeholder structure showing what each rule will contain
-    rules.append({
-        "id": 1,
-        "conditions": "WIP: IF-THEN conditions from root to leaf",
-        "prediction": "WIP: Class prediction at leaf",
-        "support": "WIP: Number of samples following this path",
-        "confidence": "WIP: Purity at leaf node",
-        "depth": tree.max_depth,
-        "why": "Each rule represents a decision path educators can interpret"
-    })
+    if class_names is None:
+        class_names = [f"class_{i}" for i in range(tree.n_classes[0])]
     
-    logger.info(f"Extracted {len(rules)} rules (WIP: placeholder)")
+    def recurse(node, path_conditions, path_samples):
+        """
+        Recursive tree traversal to extract all paths.
+        
+        WHY: Each root-to-leaf path is a complete decision rule.
+        """
+        # If leaf node, create rule
+        if tree.feature[node] == -2:  # Leaf node indicator
+            # Get class distribution at this leaf
+            class_samples = tree.value[node][0]
+            total_samples = np.sum(class_samples)
+            predicted_class_idx = np.argmax(class_samples)
+            predicted_class = class_names[predicted_class_idx]
+            confidence = class_samples[predicted_class_idx] / total_samples
+            
+            # Build human-readable condition string
+            if len(path_conditions) == 0:
+                condition_str = "ALWAYS (root only)"
+            else:
+                condition_str = " AND ".join(path_conditions)
+            
+            rule = {
+                "id": len(rules) + 1,
+                "conditions": condition_str,
+                "prediction": predicted_class,
+                "predicted_class_idx": int(predicted_class_idx),
+                "support": int(total_samples),
+                "support_pct": float(total_samples / tree.n_node_samples[0] * 100),
+                "confidence": float(confidence),
+                "purity": float(confidence),  # Same as confidence
+                "depth": len(path_conditions),
+                "class_distribution": {
+                    class_names[i]: int(class_samples[i])
+                    for i in range(len(class_names))
+                },
+                "simplicity_score": 1.0 / (len(path_conditions) + 1)  # Shorter = simpler
+            }
+            rules.append(rule)
+            return
+        
+        # Internal node - recurse left and right
+        feature_idx = tree.feature[node]
+        threshold = tree.threshold[node]
+        feature_name = feature_names[feature_idx]
+        
+        # Left child (<=)
+        left_condition = f"{feature_name} <= {threshold:.3f}"
+        left_path = path_conditions + [left_condition]
+        recurse(tree.children_left[node], left_path, path_samples)
+        
+        # Right child (>)
+        right_condition = f"{feature_name} > {threshold:.3f}"
+        right_path = path_conditions + [right_condition]
+        recurse(tree.children_right[node], right_path, path_samples)
+    
+    # Start recursion from root
+    recurse(0, [], tree.n_node_samples[0])
+    
+    logger.info(f"Extracted {len(rules)} rules from decision tree")
     return rules
 
 
@@ -111,20 +158,52 @@ def rank_rules(
     WHY: Not all rules are equally useful - prioritize high-support,
          high-confidence rules for actionable insights.
     
+    Supports multiple ranking criteria:
+    - support: Number of samples (common patterns)
+    - confidence: Prediction certainty (reliable rules)
+    - purity: Class homogeneity at leaf
+    - simplicity: Shorter rules (easier to interpret)
+    - combined: Weighted combination
+    
     Args:
         rules: List of rule dictionaries
-        criterion: Ranking criterion ("support", "confidence", "depth")
+        criterion: Ranking criterion
         
     Returns:
-        Sorted list of rules
+        Sorted list of rules (highest first)
     """
-    # WIP: Implement multi-criteria ranking
-    # WHY: Different stakeholders care about different metrics
-    #      - Teachers: high support (common patterns)
-    #      - Interventions: high confidence (reliable predictions)
+    if not rules:
+        logger.warning("No rules to rank")
+        return []
     
-    logger.info(f"Ranking {len(rules)} rules by {criterion} (WIP)")
-    return rules
+    # Define sorting keys
+    if criterion == "support":
+        sort_key = lambda r: r.get("support", 0)
+    elif criterion == "confidence":
+        sort_key = lambda r: r.get("confidence", 0)
+    elif criterion == "purity":
+        sort_key = lambda r: r.get("purity", 0)
+    elif criterion == "simplicity":
+        sort_key = lambda r: r.get("simplicity_score", 0)
+    elif criterion == "combined":
+        # Combined score: support * confidence * simplicity
+        # WHY: Balances all three factors - want common, reliable, simple rules
+        sort_key = lambda r: (
+            r.get("support", 0) *
+            r.get("confidence", 0) *
+            r.get("simplicity_score", 0)
+        )
+    else:
+        logger.warning(f"Unknown criterion '{criterion}', using support")
+        sort_key = lambda r: r.get("support", 0)
+    
+    ranked_rules = sorted(rules, key=sort_key, reverse=True)
+    
+    logger.info(f"Ranked {len(ranked_rules)} rules by {criterion}")
+    logger.info(f"Top rule: support={ranked_rules[0].get('support')}, "
+                f"confidence={ranked_rules[0].get('confidence'):.3f}")
+    
+    return ranked_rules
 
 
 def cross_validate(
