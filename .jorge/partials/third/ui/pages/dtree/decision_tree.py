@@ -75,6 +75,7 @@ def render():
             min_value=1,
             max_value=20,
             value=5,
+            key="dt_max_depth",
             help="Controla complejidad del árbol. Menor = reglas simples, mayor = más específico pero riesgo overfitting."
         )
     
@@ -84,6 +85,7 @@ def render():
             min_value=2,
             max_value=20,
             value=10,
+            key="dt_min_samples_split",
             help="Mínimo de muestras necesarias para dividir un nodo. Mayor = más conservador, previene divisiones pequeñas."
         )
     
@@ -91,6 +93,8 @@ def render():
         criterion = st.selectbox(
             "Split Criterion",
             ["gini", "entropy"],
+            index=0,  # Default to gini
+            key="dt_criterion",
             help="Gini = más rápido, Entropy (info gain) = ligeramente más preciso. Resultados similares."
         )
     
@@ -102,14 +106,16 @@ def render():
     col_v1, col_v2 = st.columns(2)
     
     with col_v1:
-        test_size = st.slider(
+        test_size_pct = st.slider(
             "Test Size (%)",
             min_value=10,
             max_value=40,
             value=20,
             step=5,
+            key="dt_test_size_pct",
             help="Porcentaje de datos para testing. 20% es estándar (80% train, 20% test)."
-        ) / 100
+        )
+        test_size = test_size_pct / 100
     
     with col_v2:
         cv_folds = st.slider(
@@ -117,6 +123,7 @@ def render():
             min_value=2,
             max_value=10,
             value=5,
+            key="dt_cv_folds",
             help="Número de folds para CV. 5-10 es estándar. Mayor = más robusto pero más lento."
         )
     
@@ -131,36 +138,37 @@ def render():
                 from core.evaluation import evaluate_classification
                 from sklearn.model_selection import train_test_split
                 
-                # Get feature names from raw data (DYNAMIC based on what was included)
-                raw_df = get_state(StateKeys.RAW_DATA, None)
-                if raw_df is not None:
-                    # Start with all columns
-                    all_cols = list(raw_df.columns)
-                    # Remove G3 (always target) and dataset_source (always metadata)
-                    exclude_list = ['G3', 'dataset_source']
-                    
-                    # Check what G features are actually in X_ready
-                    # If X_ready has 31 features, one of G1/G2 is included
-                    # If X_ready has 32 features, both G1/G2 are included
-                    # If X_ready has 30 features, neither is included
-                    
-                    if X_ready.shape[1] == 30:
-                        # Neither G1 nor G2
-                        exclude_list.extend(['G1', 'G2'])
-                    elif X_ready.shape[1] == 31:
-                        # One of them is included - need to check which was removed
-                        # For now, assume it matches the raw data minus exclusions
-                        pass
-                    # else 32 features = both included
-                    
-                    feature_names = [col for col in all_cols if col not in exclude_list]
-                    
-                    # Ensure feature_names matches X_ready shape
-                    if len(feature_names) != X_ready.shape[1]:
-                        logger.warning(f"Feature name mismatch: {len(feature_names)} names vs {X_ready.shape[1]} features. Using generic names.")
+                # Get feature names from stored state (saved during data prep)
+                feature_names = get_state("feature_names", None)
+                
+                if feature_names is None or len(feature_names) != X_ready.shape[1]:
+                    # Fallback: try to reconstruct from raw data
+                    raw_df = get_state(StateKeys.RAW_DATA, None)
+                    if raw_df is not None:
+                        # Start with all columns
+                        all_cols = list(raw_df.columns)
+                        # Remove G3 (always target) and dataset_source (always metadata)
+                        exclude_list = ['G3', 'dataset_source']
+                        
+                        # Check what G features are actually in X_ready
+                        if X_ready.shape[1] == 30:
+                            exclude_list.extend(['G1', 'G2'])
+                        elif X_ready.shape[1] == 31:
+                            # One of them is included
+                            pass
+                        # else 32 features = both included
+                        
+                        feature_names = [col for col in all_cols if col not in exclude_list]
+                        
+                        # Final check
+                        if len(feature_names) != X_ready.shape[1]:
+                            logger.warning(f"Feature name mismatch: {len(feature_names)} names vs {X_ready.shape[1]} features. Using generic names.")
+                            feature_names = [f"feature_{i}" for i in range(X_ready.shape[1])]
+                    else:
+                        logger.warning("No raw data or feature_names found. Using generic names.")
                         feature_names = [f"feature_{i}" for i in range(X_ready.shape[1])]
-                else:
-                    feature_names = [f"feature_{i}" for i in range(X_ready.shape[1])]
+                
+                logger.info(f"Using feature names: {len(feature_names)} features")
                 
                 # Split data (use user-defined test_size)
                 X_train, X_test, y_train, y_test = train_test_split(

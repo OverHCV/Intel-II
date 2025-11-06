@@ -8,8 +8,8 @@ Each page follows the same pattern:
 4. Display results with visualizations
 """
 
-from . import dataset_review
-from . import decision_tree
+from .review import dataset_review
+from .dtree import decision_tree
 from . import hierarchical
 from . import kmeans
 from . import history

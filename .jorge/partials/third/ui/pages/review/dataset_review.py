@@ -86,6 +86,8 @@ def render():
             ["Portuguese (Training - 649 students)",
              "Math (Test - 395 students)",
              "Both (Combined - 1044 students)"],
+            index=0,  # Default to Portuguese
+            key="dataset_selection",
             help="Portuguese tiene más muestras (649) → mejor para entrenamiento. Math (395) prueba si los patrones generalizan entre materias."
         )
         
@@ -99,6 +101,8 @@ def render():
              "Binary (Pass/Fail at 10)",
              "Three-class (Low/Med/High)",
              "Custom thresholds"],
+            index=0,  # Default to Five-class
+            key="target_strategy",
             help="Binary (Pass/Fail) es simple y accionable. Multi-clase permite intervenciones más finas (e.g., estudiantes 'Medios' necesitan diferente apoyo que 'Bajos')."
         )
         
@@ -106,6 +110,7 @@ def render():
             custom_thresh = st.text_input(
                 "Thresholds (comma-separated)",
                 "10,14",
+                key="custom_thresholds",
                 help="E.g., '10,14' creates 3 classes: [0-10), [10-14), [14-20]"
             )
         
@@ -115,13 +120,16 @@ def render():
         st.subheader("⚖️ Class Balancing")
         balance_method = st.selectbox(
             "Balancing Method",
-            ["SMOTE", "None", "Random Oversample", "Random Undersample"],
-            help="SMOTE (default) crea ejemplos sintéticos (mejor para datos desbalanceados). None si ya está balanceado. Random Oversample duplica. Random Undersample pierde datos."
+            ["SMOTE", "Random Oversample", "Random Undersample", "None"],
+            index=0,  # Default to SMOTE
+            key="balance_method",
+            help="SMOTE (default) crea ejemplos sintéticos (mejor para datos desbalanceados). None si ya está balanceado. Random Oversample duplica. Random Undersample pierde datos.",
         )
         
         if balance_method == "SMOTE":
             k_neighbors = st.slider(
                 "K-neighbors", 1, 10, 5,
+                key="k_neighbors",
                 help="SMOTE crea muestras sintéticas interpolando entre k vecinos más cercanos. Mayor k = más diversidad pero riesgo de incluir clase incorrecta."
             )
         
@@ -136,12 +144,14 @@ def render():
             include_g1 = st.checkbox(
                 "Include G1 (Nota Periodo 1)", 
                 value=False,
+                key="include_g1",
                 help="Incluir G1 mejora accuracy dramáticamente pero causa data leakage. Útil para comparación experimental."
             )
         with col_g2:
             include_g2 = st.checkbox(
                 "Include G2 (Nota Periodo 2)", 
                 value=False,
+                key="include_g2",
                 help="Incluir G2 mejora accuracy dramáticamente pero causa data leakage. Útil para comparación experimental."
             )
         with col_g3:
@@ -159,6 +169,11 @@ def render():
         if process_data:
             with st.spinner("🌀 Processing data..."):
                 try:
+                    # Check widget values are not None
+                    if not dataset or not target_strategy or not balance_method:
+                        st.error("⚠️ Please select all options before preparing data.")
+                        return
+                    
                     # All imports are at the top now!
                     
                     # 1. Load dataset
@@ -215,13 +230,19 @@ def render():
                     # Verify balancing worked
                     logger.info(f"Final shapes after balancing: X={X_final.shape}, y={len(y_final)}")
                     
-                    # Store in session state
+                    # Store in session state (ONLY non-widget keys!)
                     set_state(StateKeys.RAW_DATA, df_raw)
                     set_state(StateKeys.X_PREPARED, X_final)
                     set_state(StateKeys.Y_PREPARED, y_final)
-                    set_state(StateKeys.DATASET_NAME, dataset.split(" ")[0])
-                    set_state(StateKeys.TARGET_STRATEGY, target_strategy.split(" ")[0])
-                    set_state(StateKeys.BALANCE_METHOD, balance_method)
+                    
+                    # Store metadata (derived from widget values, not the widget keys themselves)
+                    set_state(StateKeys.DATASET_NAME, dataset.split(" ")[0] if dataset else "Portuguese")
+                    set_state(StateKeys.TARGET_STRATEGY, target_strategy.split(" ")[0] if target_strategy else "five-class")
+                    set_state(StateKeys.BALANCE_METHOD, balance_method if balance_method else "SMOTE")
+                    
+                    # Store feature names for later use (CRITICAL for Decision Trees)
+                    feature_names_list = [col for col in df_raw.columns if col not in ['G3', 'dataset_source'] + features_to_remove]
+                    set_state("feature_names", feature_names_list)
                     
                     st.session_state["data_loaded"] = True
                     st.success(f"✅ Data prepared: {X_final.shape[0]} samples, {X_final.shape[1]} features!")

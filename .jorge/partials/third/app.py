@@ -308,7 +308,7 @@ if current_page == "Home":
     # st.success("👆 **Usa la navegación ** para acceder a cada sección.")
 
 elif current_page == "Dataset Review":
-    from ui.pages import dataset_review
+    from ui.pages.review import dataset_review
     dataset_review.render()
 
 elif current_page == "Decision Trees":
@@ -332,6 +332,5 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #666; font-size: 0.85rem;'>
     <p>Universidad de Caldas • Intelligence II • 2025</p>
-    <p style='font-size: 0.75rem;'>Architecture: Data → Core → Versioning → UI | All files < 300 LOC</p>
 </div>
 """, unsafe_allow_html=True)

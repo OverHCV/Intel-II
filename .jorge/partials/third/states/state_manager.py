@@ -120,18 +120,23 @@ def get_or_compute(
 
 # Common state keys (constants to avoid typos)
 class StateKeys:
-    """Centralized state key definitions."""
+    """Centralized state key definitions.
+    
+    CRITICAL: These keys MUST NOT conflict with widget keys!
+    Widget keys: dataset_selection, target_strategy, balance_method, etc.
+    StateKeys: Use _meta suffix to avoid conflicts.
+    """
     
     # Page navigation
     CURRENT_PAGE = "current_page"
     
-    # Data keys
-    DATASET_NAME = "dataset_name"
+    # Data keys (metadata, NOT widget keys)
+    DATASET_NAME = "dataset_name_meta"  # Derived from widget
     RAW_DATA = "raw_data"
     PROCESSED_DATA = "processed_data"
     DATA_METADATA = "data_metadata"
-    TARGET_STRATEGY = "target_strategy"
-    BALANCE_METHOD = "balance_method"
+    TARGET_STRATEGY = "target_strategy_meta"  # Derived from widget
+    BALANCE_METHOD = "balance_method_meta"  # Derived from widget
     X_PREPARED = "X_prepared"
     Y_PREPARED = "y_prepared"
     
@@ -147,7 +152,6 @@ class StateKeys:
     PREDICTIONS = "predictions"
     
     # UI keys
-    CURRENT_PAGE = "current_page"
     SIDEBAR_STATE = "sidebar_state"
     
     # Experiment keys
