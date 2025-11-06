@@ -8,13 +8,18 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 import sys
-from ui.state_manager import init_state, get_state, set_state, StateKeys
-from data.loader import load_dataset
-from constants.base import FEATURE_CATEGORIES, FEATURE_DESCRIPTIONS
 
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
+
+# CRITICAL: Import and initialize ALL state BEFORE any page imports
+from states import init_all_state, get_state, set_state, StateKeys
+from data.loader import load_dataset
+from constants.base import FEATURE_CATEGORIES, FEATURE_DESCRIPTIONS
+
+# Initialize ALL application state (once, at startup)
+init_all_state()
 
 
 # Configure page
@@ -24,9 +29,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Initialize state
-init_state(StateKeys.CURRENT_PAGE, "Home")
 
 # App Header with gradient
 st.markdown("""

@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 from sklearn.tree import plot_tree
 import logging
 
-# Import feature descriptions
+# Import state management and feature descriptions
+from states import get_state, set_state, StateKeys
 from constants.base import get_feature_description
 
 logger = logging.getLogger(__name__)
@@ -53,8 +54,6 @@ def render():
     st.markdown("## 🌳 Decision Tree (CART)")
     
     # Check if data is ready
-    from ui.state_manager import get_state, set_state, StateKeys
-    
     X_ready = get_state(StateKeys.X_PREPARED, None)
     y_ready = get_state(StateKeys.Y_PREPARED, None)
     
@@ -336,20 +335,24 @@ def render():
                 
                 # Tree visualization
                 st.markdown("#### 🌳 Estructura del Árbol")
-                fig_tree, ax_tree = plt.subplots(figsize=(20, 10))
+                
+                actual_depth = model.get_depth()
+                display_depth = min(actual_depth, 4)  # Max 4 levels for readability
+                
+                fig_tree, ax_tree = plt.subplots(figsize=(20, max(10, actual_depth * 2)))
                 plot_tree(
                     model,
                     feature_names=feature_names,
                     class_names=class_names,
                     filled=True,
                     ax=ax_tree,
-                    fontsize=8,
-                    max_depth=3  # Only show first 3 levels for readability
+                    fontsize=max(6, 10 - actual_depth),  # Smaller font for deeper trees
+                    max_depth=display_depth  # Show first N levels
                 )
-                ax_tree.set_title(f"Árbol CART (primeros 3 niveles)", fontsize=14)
+                ax_tree.set_title(f"Árbol CART (Profundidad {actual_depth}, mostrando {display_depth} niveles)", fontsize=14)
                 st.pyplot(fig_tree)
                 plt.close()
-                st.caption(f"Profundidad total: {model.get_depth()}, Hojas: {model.get_n_leaves()}. Se muestran solo 3 niveles por legibilidad.")
+                st.caption(f"📏 Profundidad real: {actual_depth} | Hojas: {model.get_n_leaves()} | Reglas: {len(rules)}. Visualización limitada a {display_depth} niveles por legibilidad.")
                 
                 # Feature Importance with descriptions
                 st.markdown("#### ⭐ Top 10 Importancia de Características")

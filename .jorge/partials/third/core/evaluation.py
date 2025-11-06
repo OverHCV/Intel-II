@@ -126,7 +126,11 @@ def evaluate_classification(
         Dictionary with all classification metrics
     """
     n_classes = len(np.unique(y_true))
-    average = "binary" if n_classes == 2 else "macro"
+    
+    # CRITICAL: Use 'weighted' for all cases (binary and multiclass)
+    # 'weighted' accounts for class imbalance by weighting metrics by support
+    # Don't use 'binary' with string labels (causes pos_label error)
+    average = "weighted"
     
     results = {
         "accuracy": float(accuracy_score(y_true, y_pred)),
@@ -138,10 +142,9 @@ def evaluate_classification(
         "n_classes": n_classes
     }
     
-    # Add per-class metrics if multiclass
-    if n_classes > 2:
-        report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
-        results["per_class"] = report
+    # Add per-class metrics for all cases
+    report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
+    results["per_class"] = report
     
     logger.info(
         f"Classification: Acc={results['accuracy']:.3f}, "

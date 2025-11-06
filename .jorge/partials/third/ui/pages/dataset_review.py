@@ -16,7 +16,7 @@ from data.loader import load_dataset
 from data.transformer import engineer_target, remove_leakage_features, split_features_target
 from data.preprocessor import encode_categorical, scale_numerical
 from data.balancer import balance_classes
-from ui.state_manager import get_state, set_state, StateKeys
+from states import get_state, set_state, StateKeys
 from constants.base import FEATURE_DESCRIPTIONS, FEATURE_SHORT_NAMES, get_feature_description
 
 logger = logging.getLogger(__name__)
@@ -266,15 +266,19 @@ def render():
                 st.caption(f"Ratio de desbalance: {imbalance_ratio:.2f}. Si >2.0 una clase domina → sesgo del modelo")
             
             with tabs[1]:
-                # REAL Correlation heatmap
+                # Correlation heatmap (LOWER TRIANGLE ONLY)
                 st.markdown("#### 🔥 Feature Correlation Matrix")
                 
                 # Compute correlation
                 corr_matrix = pd.DataFrame(X_viz).corr()
                 
+                # Mask upper triangle and diagonal
+                mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
+                corr_masked = corr_matrix.mask(mask)
+                
                 # Plot heatmap
                 fig_corr, ax_corr = plt.subplots(figsize=(12, 10))
-                im = ax_corr.imshow(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1, aspect='auto')
+                im = ax_corr.imshow(corr_masked, cmap='coolwarm', vmin=-1, vmax=1, aspect='auto')
                 
                 # Add colorbar
                 cbar = plt.colorbar(im, ax=ax_corr)
@@ -288,12 +292,12 @@ def render():
                 ax_corr.set_xticklabels([f"F{i}" for i in tick_positions], rotation=45)
                 ax_corr.set_yticklabels([f"F{i}" for i in tick_positions])
                 
-                ax_corr.set_title("Feature Correlation Heatmap", fontsize=14, pad=20)
+                ax_corr.set_title("Feature Correlation Heatmap (Lower Triangle)", fontsize=14, pad=20)
                 plt.tight_layout()
                 st.pyplot(fig_corr)
                 plt.close()
                 
-                st.caption("💡 Rojo = correlación positiva, Azul = negativa. Colores oscuros = correlación fuerte. Alta correlación (>0.9) = características redundantes.")
+                st.caption("💡 Solo triángulo inferior (sin duplicados ni diagonal). Rojo = correlación positiva, Azul = negativa. Alta correlación (>0.9) = características redundantes.")
                 
                 # Show top correlations
                 corr_pairs = []

@@ -6,8 +6,8 @@
   "files.exclude": {
     "**/.jairo/**": true,
     "**/.salda/**": true,
+    "**/**.lock": true,
     // ".venv/**": true,
-    // "**/**.ipynb": true,
-    // "**/**.lock": true,
+    // "**/**.ipynb": true
   }
 }
