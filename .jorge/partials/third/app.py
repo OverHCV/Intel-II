@@ -308,8 +308,8 @@ if current_page == "Home":
     # st.success("👆 **Usa la navegación ** para acceder a cada sección.")
 
 elif current_page == "Dataset Review":
-    from ui.pages.review import dataset_review
-    dataset_review.render()
+    from ui.pages.review import render as dataset_review_render
+    dataset_review_render()
 
 elif current_page == "Decision Trees":
     from ui.pages import decision_tree
