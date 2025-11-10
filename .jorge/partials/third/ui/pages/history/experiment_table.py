@@ -91,7 +91,7 @@ def render_experiment_table(experiments: List[Dict[str, Any]]) -> Optional[List[
         
         with cols[0]:
             is_selected = row['version_id'] in st.session_state.selected_exp_ids
-            if st.checkbox("", value=is_selected, key=f"exp_{row['version_id']}"):
+            if st.checkbox("Select", value=is_selected, key=f"exp_{row['version_id']}", label_visibility="collapsed"):
                 if row['version_id'] not in st.session_state.selected_exp_ids:
                     if len(st.session_state.selected_exp_ids) < 5:
                         st.session_state.selected_exp_ids.append(row['version_id'])

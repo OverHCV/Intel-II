@@ -94,7 +94,7 @@ def render_j4_analysis(j4_results: Dict[str, Any]):
             'K': k_values,
             'Silhouette': [f"{score:.4f}" for score in silhouette_scores]
         })
-        st.dataframe(j4_df, hide_index=True, use_container_width=True)
+        st.dataframe(j4_df, hide_index=True, width='stretch')
         
         st.metric(
             "K Óptimo",

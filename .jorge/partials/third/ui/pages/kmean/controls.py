@@ -102,7 +102,7 @@ def render_controls():
     train_button = st.button(
         "🚀 Run K-means Clustering",
         type="primary",
-        use_container_width=True,
+        width='stretch',
         help="Ejecuta K-means con los parámetros configurados."
     )
     

@@ -93,12 +93,7 @@ def render_confusion_matrix(metrics: Dict[str, Any], class_names: List[str], n_t
     """
     st.markdown("#### 🎯 Matriz de Confusión")
     
-    st.caption(f"""
-    📈 **Interpretación**: Matriz de {n_test_samples} predicciones del test set.
-    - Diagonal (azul oscuro) = predicciones correctas
-    - Fuera de diagonal = errores del modelo
-    - Cada fila suma ~{n_test_samples//len(class_names)} (test set balanceado con {n_test_samples} samples ÷ {len(class_names)} clases)
-    """)
+
     
     cm = np.array(metrics['confusion_matrix'])
     fig_cm, ax_cm = plt.subplots(figsize=(6, 5))
@@ -126,6 +121,13 @@ def render_confusion_matrix(metrics: Dict[str, Any], class_names: List[str], n_t
     
     plt.colorbar(im, ax=ax_cm)
     st.pyplot(fig_cm)
+
+    st.caption(f"""
+    📈 **Interpretación**: Matriz de {n_test_samples} predicciones del test set.
+    - Diagonal (azul oscuro) = predicciones correctas
+    - Fuera de diagonal = errores del modelo
+    - Cada fila suma ~{n_test_samples // len(class_names)} (test set balanceado con {n_test_samples} samples ÷ {len(class_names)} clases)
+    """)
     plt.close()
 
 
@@ -268,23 +270,26 @@ def render_all_results(results: Dict[str, Any], cv_folds: int):
     # Cross-validation
     render_cross_validation(results['cv_results'], cv_folds)
     
-    # Confusion matrix
-    render_confusion_matrix(
-        results['metrics'], 
-        results['class_names'], 
-        len(results['X_test'])
-    )
+    # Confusion matrix + Feature importance in two columns
+    col_cm, col_fi = st.columns(2)
     
-    # Tree structure
+    with col_cm:
+        render_confusion_matrix(
+            results['metrics'], 
+            results['class_names'], 
+            len(results['X_test'])
+        )
+    
+    with col_fi:
+        render_feature_importance(results['feature_importance'])
+    
+    # Tree structure (full width)
     render_tree_structure(
         results['model'], 
         results['feature_names'], 
         results['class_names']
     )
     
-    # Feature importance
-    render_feature_importance(results['feature_importance'])
-    
-    # Extracted rules
+    # Extracted rules (full width)
     render_rules(results['rules'], len(results['X_train']))
 

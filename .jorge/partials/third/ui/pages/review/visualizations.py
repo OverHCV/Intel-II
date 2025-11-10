@@ -185,6 +185,6 @@ def _render_summary_stats(X: np.ndarray):
         summary = summary[['Feature', 'mean', 'std', 'min', 'max']]
         summary.columns = ['Feature', 'Media', 'Desv. Est.', 'Mín', 'Máx']
     
-    st.dataframe(summary, use_container_width=True, height=400)
+    st.dataframe(summary, width='stretch', height=400)
     st.caption("💡 Estadísticas descriptivas de cada característica. Comprender las características es clave para interpretar decisiones del modelo.")
 

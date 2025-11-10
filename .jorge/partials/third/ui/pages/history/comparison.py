@@ -76,7 +76,7 @@ def _compare_decision_trees(experiments: List[Dict[str, Any]]) -> None:
         })
     
     df = pd.DataFrame(comparison_data)
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width='stretch')
     
     # Metrics comparison chart
     if len(experiments) > 1:
@@ -102,7 +102,7 @@ def _compare_hierarchical(experiments: List[Dict[str, Any]]) -> None:
         })
     
     df = pd.DataFrame(comparison_data)
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width='stretch')
     
     if len(experiments) > 1:
         _plot_metrics_comparison(experiments, ['silhouette_avg', 'fisher_j4'])
@@ -129,7 +129,7 @@ def _compare_kmeans(experiments: List[Dict[str, Any]]) -> None:
         })
     
     df = pd.DataFrame(comparison_data)
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width='stretch')
     
     if len(experiments) > 1:
         _plot_metrics_comparison(experiments, ['silhouette_avg', 'fisher_j4', 'inertia'])
