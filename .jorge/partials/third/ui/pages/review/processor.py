@@ -100,12 +100,13 @@ def process_data(user_selections: Dict[str, Any]) -> Tuple[np.ndarray, np.ndarra
     balance_strategy = balance_map[balance_method]
     
     logger.info(f"Applying balancing: {balance_strategy}")
-    X_final, y_final = balance_classes(
-        X_scaled, y,
-        method=balance_strategy,
-        random_state=42,
-        k_neighbors=k_neighbors if balance_strategy == "smote" else 5
-    )
+    
+    # Prepare kwargs based on method
+    balance_kwargs = {"method": balance_strategy, "random_state": 42}
+    if balance_strategy == "smote":
+        balance_kwargs["k_neighbors"] = k_neighbors
+    
+    X_final, y_final = balance_classes(X_scaled, y, **balance_kwargs)
     
     logger.info(f"Final shapes: X={X_final.shape}, y={len(y_final)}")
     

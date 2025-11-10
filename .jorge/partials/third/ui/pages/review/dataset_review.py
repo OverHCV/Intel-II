@@ -21,7 +21,7 @@ from .theory import render_theory_section
 from .controls import render_controls
 from .processor import process_data
 from .visualizations import render_visualizations
-from states import get_state, StateKeys
+from states import get_state, set_state, StateKeys
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +59,24 @@ def render():
         X_viz = get_state(StateKeys.X_PREPARED, None)
         y_viz = get_state(StateKeys.Y_PREPARED, None)
         
-        # Auto-process data when selections change
+        # Check if current parameters match stored ones
+        stored_params = get_state("dataset_review_params", {})
+        current_params = {
+            'dataset': user_selections['dataset'],
+            'target_strategy': user_selections['target_strategy'],
+            'include_g1': user_selections['include_g1'],
+            'include_g2': user_selections['include_g2'],
+            'balance_method': user_selections['balance_method'],
+            'k_neighbors': user_selections['k_neighbors']
+        }
+        
+        params_changed = (stored_params != current_params)
+        
+        # Auto-process data when selections change OR data doesn't exist
         process_needed = (
             X_viz is None or 
             y_viz is None or 
+            params_changed or
             not get_state("data_loaded", False)
         )
         
@@ -70,6 +84,10 @@ def render():
             with st.spinner("🌀 Processing data..."):
                 try:
                     X_final, y_final, df_raw = process_data(user_selections)
+                    
+                    # Store current params
+                    set_state("dataset_review_params", current_params)
+                    
                     st.success(f"✅ Data prepared: {X_final.shape[0]} samples, {X_final.shape[1]} features!")
                     
                     # Render visualizations with fresh data

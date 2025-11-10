@@ -114,36 +114,35 @@ def render_controls() -> Dict[str, Any]:
     
     st.markdown("---")
     
-    # G1/G2 Inclusion Section
-    st.subheader("📊 Data Leakage Control (G1/G2)")
-    st.warning("⚠️ G1 y G2 predicen G3 casi perfectamente (~90%+ accuracy). Incluirlos causa **data leakage** pero permite ver el impacto.")
+    # G1/G2 Inclusion Section (Optional - for experimentation)
+    st.subheader("📊 Notas Previas (G1/G2)")
+    st.caption("💡 G1 y G2 correlacionan fuertemente con G3. Por defecto se excluyen para predicción realista.")
     
     col_g1, col_g2, col_g3 = st.columns(3)
     
     with col_g1:
         include_g1 = st.checkbox(
-            "Include G1 (Nota Periodo 1)", 
+            "Include G1", 
             value=st.session_state.get("include_g1", False),
             key="include_g1",
-            help="Incluir G1 mejora accuracy dramáticamente pero causa data leakage. Útil para comparación experimental."
+            help="Nota del primer periodo. Útil para análisis experimental."
         )
     
     with col_g2:
         include_g2 = st.checkbox(
-            "Include G2 (Nota Periodo 2)", 
+            "Include G2", 
             value=st.session_state.get("include_g2", False),
             key="include_g2",
-            help="Incluir G2 mejora accuracy dramáticamente pero causa data leakage. Útil para comparación experimental."
+            help="Nota del segundo periodo. Útil para análisis experimental."
         )
     
     with col_g3:
         if include_g1 or include_g2:
-            st.metric("⚠️ Data Leakage", "ACTIVO", delta="Cuidado!")
+            st.metric("📊 Features", f"{30 + int(include_g1) + int(include_g2)}", delta="G1/G2 incluidas")
         else:
-            st.metric("✅ Clean Data", "ACTIVO", delta="Sin leakage")
+            st.metric("✅ Features", "30", delta="Sin G1/G2")
     
     st.markdown("---")
-    st.info("🔒 **Prevención Fuga de Datos**: G1 y G2 se excluyen automáticamente. Predicen G3 trivialmente.")
     
     # Return all selections
     return {
