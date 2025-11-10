@@ -92,9 +92,7 @@ def render_confusion_matrix(metrics: Dict[str, Any], class_names: List[str], n_t
         n_test_samples: Total test samples
     """
     st.markdown("#### 🎯 Matriz de Confusión")
-    
 
-    
     cm = np.array(metrics['confusion_matrix'])
     fig_cm, ax_cm = plt.subplots(figsize=(6, 5))
     im = ax_cm.imshow(cm, cmap='Blues')
