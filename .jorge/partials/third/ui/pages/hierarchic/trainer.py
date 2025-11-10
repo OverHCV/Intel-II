@@ -5,14 +5,14 @@ Single Responsibility: Execute clustering and generate all results.
 """
 
 import numpy as np
-import pandas as pd
 import logging
 import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from scipy.cluster.hierarchy import linkage, fcluster
 from sklearn.metrics import silhouette_score
 
 from .j4_analysis import find_optimal_k, get_silhouette_samples_per_cluster
+from .fisher_j4 import calculate_fisher_j4
 from states import get_state, set_state, StateKeys
 
 logger = logging.getLogger(__name__)
@@ -85,13 +85,17 @@ def train_hierarchical_clustering(
         
         logger.info(f"Clustered {len(X)} samples into {n_clusters} clusters")
         
-        # Calculate silhouette scores
+        # Calculate Silhouette scores
         silhouette_avg = silhouette_score(X, labels, metric=params['distance_metric'])
         silhouette_vals, cluster_silhouette_means = get_silhouette_samples_per_cluster(
             X, labels, params['distance_metric']
         )
         
-        logger.info(f"Average Silhouette Score (J4): {silhouette_avg:.4f}")
+        logger.info(f"Average Silhouette Score: {silhouette_avg:.4f}")
+        
+        # Calculate Fisher's J4 (trace(SB)/trace(SW))
+        fisher_j4, _, _ = calculate_fisher_j4(X, labels)  # _ = unused SB, SW matrices
+        logger.info(f"Fisher J4 (trace(SB)/trace(SW)): {fisher_j4:.4f}")
         
         # Calculate cluster sizes
         unique_labels, counts = np.unique(labels, return_counts=True)
@@ -126,11 +130,12 @@ def train_hierarchical_clustering(
             },
             "metrics": {
                 "silhouette_avg": float(silhouette_avg),
+                "fisher_j4": float(fisher_j4),
                 "cluster_sizes": cluster_sizes
             },
             "j4_analysis": {
                 "optimal_k": j4_results['optimal_k'] if j4_results else None,
-                "optimal_j4": j4_results['optimal_j4'] if j4_results else None
+                "optimal_score": j4_results['optimal_score'] if j4_results else None
             } if j4_results else None
         }
         
@@ -149,6 +154,7 @@ def train_hierarchical_clustering(
             'labels': labels,
             'n_clusters': n_clusters,
             'silhouette_avg': silhouette_avg,
+            'fisher_j4': fisher_j4,
             'silhouette_vals': silhouette_vals,
             'cluster_silhouette_means': cluster_silhouette_means,
             'cluster_sizes': cluster_sizes,

@@ -1,7 +1,10 @@
 """
 J4 Analysis for finding optimal K in Hierarchical Clustering.
 
-Single Responsibility: Calculate silhouette scores for different K values.
+Single Responsibility: Calculate Silhouette scores for different K values.
+
+Note: This uses Silhouette score. For Fisher's J4 (trace(SB)/trace(SW)), 
+see fisher_j4.py module.
 """
 
 import numpy as np
@@ -13,14 +16,14 @@ from scipy.cluster.hierarchy import linkage, fcluster
 logger = logging.getLogger(__name__)
 
 
-def calculate_j4_for_k(
+def calculate_silhouette_for_k(
     X: np.ndarray, 
     k: int, 
     linkage_method: str = "ward",
     distance_metric: str = "euclidean"
 ) -> float:
     """
-    Calculate J4 (average silhouette score) for a specific K.
+    Calculate Silhouette score for a specific K.
     
     Args:
         X: Feature matrix (n_samples, n_features)
@@ -29,7 +32,7 @@ def calculate_j4_for_k(
         distance_metric: Distance metric
     
     Returns:
-        float: Silhouette score (J4 metric)
+        float: Silhouette score
     """
     try:
         # Compute linkage matrix
@@ -50,7 +53,7 @@ def calculate_j4_for_k(
         return float(score)
         
     except Exception as e:
-        logger.error(f"Error calculating J4 for k={k}: {e}")
+        logger.error(f"Error calculating Silhouette for k={k}: {e}")
         return -1.0
 
 
@@ -62,7 +65,7 @@ def find_optimal_k(
     distance_metric: str = "euclidean"
 ) -> Dict[str, any]:
     """
-    Find optimal K using J4 (silhouette) analysis.
+    Find optimal K using Silhouette analysis.
     
     Runs clustering for K in [k_min, k_max] and computes silhouette score.
     
@@ -76,33 +79,33 @@ def find_optimal_k(
     Returns:
         Dict with results: {
             'k_values': list of K tested,
-            'j4_scores': list of silhouette scores,
+            'silhouette_scores': list of silhouette scores,
             'optimal_k': best K value,
-            'optimal_j4': best silhouette score
+            'optimal_score': best silhouette score
         }
     """
-    logger.info(f"Running J4 analysis for K={k_min} to {k_max}...")
+    logger.info(f"Running Silhouette analysis for K={k_min} to {k_max}...")
     
     k_values = list(range(k_min, k_max + 1))
-    j4_scores = []
+    silhouette_scores = []
     
     for k in k_values:
-        score = calculate_j4_for_k(X, k, linkage_method, distance_metric)
-        j4_scores.append(score)
-        logger.info(f"K={k}: J4={score:.4f}")
+        score = calculate_silhouette_for_k(X, k, linkage_method, distance_metric)
+        silhouette_scores.append(score)
+        logger.info(f"K={k}: Silhouette={score:.4f}")
     
     # Find optimal K (highest silhouette score)
-    optimal_idx = np.argmax(j4_scores)
+    optimal_idx = np.argmax(silhouette_scores)
     optimal_k = k_values[optimal_idx]
-    optimal_j4 = j4_scores[optimal_idx]
+    optimal_score = silhouette_scores[optimal_idx]
     
-    logger.info(f"✅ Optimal K: {optimal_k} (J4={optimal_j4:.4f})")
+    logger.info(f"✅ Optimal K: {optimal_k} (Silhouette={optimal_score:.4f})")
     
     return {
         'k_values': k_values,
-        'j4_scores': j4_scores,
+        'silhouette_scores': silhouette_scores,
         'optimal_k': optimal_k,
-        'optimal_j4': optimal_j4
+        'optimal_score': optimal_score
     }
 
 

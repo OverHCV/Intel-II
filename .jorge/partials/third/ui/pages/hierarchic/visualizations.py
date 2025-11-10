@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 from states import get_state
 from constants.base import get_feature_description
@@ -31,8 +31,25 @@ def render_data_info(results: Dict[str, Any]):
     - Número de clusters: **{results['n_clusters']}**
     - Linkage method: **{results['params']['linkage_method']}**
     - Distance metric: **{results['params']['distance_metric']}**
-    - Silhouette Score (J4): **{results['silhouette_avg']:.4f}**
+    - Silhouette Score: **{results['silhouette_avg']:.4f}**
+    - Fisher J4 (trace(SB)/trace(SW)): **{results['fisher_j4']:.4f}**
     """)
+    
+    # Explanation of metrics
+    with st.expander("📖 Explicación de Métricas"):
+        st.markdown("""
+        **Silhouette Score** (rango: -1 a 1):
+        - Mide qué tan bien están separados los clusters
+        - Valores cercanos a 1: clusters bien definidos
+        - Valores cercanos a 0: clusters se solapan
+        - Valores negativos: muestras mal asignadas
+        
+        **Fisher J4** = trace(SB) / trace(SW):
+        - SB = Between-cluster scatter (varianza entre clusters)
+        - SW = Within-cluster scatter (varianza intra-cluster)
+        - **Valores más altos = mejor separación**
+        - Usado en el notebook de referencia
+        """)
     
     st.success("✅ Hierarchical clustering completado exitosamente!")
 
@@ -47,24 +64,24 @@ def render_j4_analysis(j4_results: Dict[str, Any]):
     if j4_results is None:
         return
     
-    st.markdown("### 🎯 J4 Analysis (Optimal K)")
+    st.markdown("### 🎯 Análisis de K Óptimo (Silhouette)")
     
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        # Plot J4 scores vs K
+        # Plot Silhouette scores vs K
         fig_j4, ax_j4 = plt.subplots(figsize=(10, 5))
         
         k_values = j4_results['k_values']
-        j4_scores = j4_results['j4_scores']
+        silhouette_scores = j4_results['silhouette_scores']
         optimal_k = j4_results['optimal_k']
         
-        ax_j4.plot(k_values, j4_scores, marker='o', linewidth=2, markersize=8, color='steelblue')
-        ax_j4.axvline(x=optimal_k, color='red', linestyle='--', linewidth=2, label=f'Optimal K={optimal_k}')
+        ax_j4.plot(k_values, silhouette_scores, marker='o', linewidth=2, markersize=8, color='steelblue')
+        ax_j4.axvline(x=optimal_k, color='red', linestyle='--', linewidth=2, label=f'K óptimo={optimal_k}')
         ax_j4.axhline(y=0, color='gray', linestyle='-', linewidth=0.5, alpha=0.5)
-        ax_j4.set_xlabel("Number of Clusters (K)")
-        ax_j4.set_ylabel("Silhouette Score (J4)")
-        ax_j4.set_title("J4 Score vs Number of Clusters")
+        ax_j4.set_xlabel("Número de Clusters (K)")
+        ax_j4.set_ylabel("Silhouette Score")
+        ax_j4.set_title("Silhouette Score vs K")
         ax_j4.grid(True, alpha=0.3)
         ax_j4.legend()
         plt.tight_layout()
@@ -72,17 +89,17 @@ def render_j4_analysis(j4_results: Dict[str, Any]):
         plt.close()
     
     with col2:
-        st.markdown("#### 📊 J4 Scores")
+        st.markdown("#### 📊 Silhouette Scores")
         j4_df = pd.DataFrame({
             'K': k_values,
-            'J4 Score': [f"{score:.4f}" for score in j4_scores]
+            'Silhouette': [f"{score:.4f}" for score in silhouette_scores]
         })
-        st.dataframe(j4_df, hide_index=True, width="stretch")
+        st.dataframe(j4_df, hide_index=True, use_container_width=True)
         
         st.metric(
-            "Optimal K",
+            "K Óptimo",
             optimal_k,
-            delta=f"J4={j4_results['optimal_j4']:.4f}"
+            delta=f"Score={j4_results['optimal_score']:.4f}"
         )
     
     st.caption("""
@@ -264,8 +281,9 @@ def render_cluster_profiles(cluster_profiles: Dict[int, Dict], n_features: int =
     # Display each cluster profile
     for cluster_id, profile in cluster_profiles.items():
         with st.expander(f"📌 Cluster {cluster_id} ({profile['size']} students)", expanded=(cluster_id == 0)):
-            means = profile['mean']
-            stds = profile['std']
+            # Ensure means and stds are numpy arrays to avoid pandas indexing warnings
+            means = np.asarray(profile['mean'])
+            stds = np.asarray(profile['std'])
             
             # Get top N features by absolute mean value (scaled data, so mean shows deviation from 0)
             top_indices = np.argsort(np.abs(means))[-n_features:][::-1]
@@ -276,7 +294,7 @@ def render_cluster_profiles(cluster_profiles: Dict[int, Dict], n_features: int =
                 if idx < len(feature_names):
                     feat_name = feature_names[idx]
                     feat_desc = get_feature_description(feat_name)
-                    # Convert to float to avoid pandas indexing issues
+                    # Access by integer index (guaranteed safe with numpy array)
                     mean_val = float(means[idx])
                     std_val = float(stds[idx])
                     profile_data.append({
