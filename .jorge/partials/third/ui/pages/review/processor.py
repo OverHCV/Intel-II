@@ -72,11 +72,11 @@ def process_data(user_selections: Dict[str, Any]) -> Tuple[np.ndarray, np.ndarra
     
     if features_to_remove:
         df_clean = remove_leakage_features(df_raw, features_to_remove=features_to_remove)
-        logger.info(f"Removed leakage features: {features_to_remove}")
+        logger.info(f"Removed features: {features_to_remove}")
     else:
         # Keep G1/G2, but remove dataset_source
         df_clean = remove_leakage_features(df_raw, features_to_remove=["dataset_source"])
-        logger.info("Keeping G1/G2 (data leakage mode)")
+        logger.info("G1/G2 included")
     
     # 4. Split X and y
     X, _ = split_features_target(df_clean.assign(target=y), "target")

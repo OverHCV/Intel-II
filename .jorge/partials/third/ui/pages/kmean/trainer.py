@@ -15,6 +15,7 @@ from .elbow_analysis import find_optimal_k_elbow
 from ui.pages.hierarchic.fisher_j4 import calculate_fisher_j4
 from ui.pages.hierarchic.j4_analysis import get_silhouette_samples_per_cluster
 from states import get_state, set_state, StateKeys
+from versioning.experiment_store import save_experiment
 
 logger = logging.getLogger(__name__)
 
@@ -100,40 +101,32 @@ def train_kmeans_clustering(X: np.ndarray, params: Dict[str, Any]) -> Dict[str, 
                 'size': int(np.sum(cluster_mask))
             }
         
-        # Save experiment to history
-        experiment_id = f"KM_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
-        experiment_data = {
-            "id": experiment_id,
-            "timestamp": datetime.datetime.now().isoformat(),
-            "params": {
+        # Save experiment to persistent storage
+        experiment_data_for_store = {
+            "parameters": {
                 "n_clusters": n_clusters,
                 "init_method": params['init_method'],
                 "n_init": params['n_init'],
                 "max_iter": params['max_iter']
             },
-            "data": {
-                "total_samples": len(X),
-                "n_features": X.shape[1]
-            },
             "metrics": {
                 "silhouette_avg": float(silhouette_avg),
                 "fisher_j4": float(fisher_j4),
                 "inertia": float(kmeans.inertia_),
-                "n_iterations": int(kmeans.n_iter_),
-                "cluster_sizes": cluster_sizes
+                "n_clusters": n_clusters
             },
-            "elbow_analysis": {
-                "suggested_k": elbow_results['suggested_k'] if elbow_results else None
-            } if elbow_results else None
+            "dataset_info": {
+                "total_samples": len(X),
+                "n_features": X.shape[1]
+            }
         }
         
-        # Append to experiment history
-        history = get_state("experiment_history_km", [])
-        history.append(experiment_data)
-        set_state("experiment_history_km", history)
+        experiment_id = save_experiment(
+            experiment_data_for_store,
+            algorithm_type="kmeans"
+        )
         
-        logger.info(f"Saved experiment {experiment_id} to history")
+        logger.info(f"Saved experiment {experiment_id} to persistent storage")
         
         # Store results in state
         set_state(StateKeys.KM_LABELS, labels)

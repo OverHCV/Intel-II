@@ -1,0 +1,27 @@
+{
+  "version_id": "20251109_203028_decision_tree_4ae73b",
+  "algorithm_type": "decision_tree",
+  "timestamp": "2025-11-09T20:30:28.742655",
+  "parameters": {
+    "max_depth": 5,
+    "min_samples_split": 9,
+    "criterion": "gini",
+    "test_size": 0.2,
+    "cv_folds": 5
+  },
+  "metrics": {
+    "accuracy": 0.3781094527363184,
+    "precision": 0.47870202917772875,
+    "recall": 0.3781094527363184,
+    "f1": 0.3561808313630598,
+    "cv_mean": 0.36616915422885576,
+    "cv_std": 0.08458296731284941
+  },
+  "dataset_info": {
+    "total_samples": 1005,
+    "n_features": 30,
+    "n_classes": 5,
+    "train_samples": 804,
+    "test_samples": 201
+  }
+}

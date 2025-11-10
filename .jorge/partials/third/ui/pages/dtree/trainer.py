@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from core.decision_tree import train_cart, extract_rules, rank_rules, cross_validate, get_feature_importance
 from core.evaluation import evaluate_classification
 from states import get_state, set_state, StateKeys
+from versioning.experiment_store import save_experiment
 
 logger = logging.getLogger(__name__)
 
@@ -171,48 +172,39 @@ def train_model(X: np.ndarray, y: np.ndarray, params: Dict[str, Any]) -> Dict[st
         set_state(StateKeys.DT_MODEL, model)
         set_state(StateKeys.DT_RULES, ranked_rules)
         
-        # Save experiment to history
-        experiment_id = f"DT_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
-        experiment_data = {
-            "id": experiment_id,
-            "timestamp": datetime.datetime.now().isoformat(),
-            "algorithm": "Decision Tree (CART)",
-            "params": {
+        # Save experiment to persistent storage
+        experiment_data_for_store = {
+            "model": model,
+            "parameters": {
                 "max_depth": params['max_depth'],
                 "min_samples_split": params['min_samples_split'],
                 "criterion": params['criterion'],
                 "test_size": params['test_size'],
                 "cv_folds": params['cv_folds']
             },
-            "data": {
+            "metrics": {
+                "accuracy": metrics['accuracy'],
+                "precision": metrics['precision'],
+                "recall": metrics['recall'],
+                "f1": metrics['f1_score'],
+                "cv_mean": cv_results['mean'],
+                "cv_std": cv_results['std']
+            },
+            "dataset_info": {
                 "total_samples": len(X),
                 "n_features": X.shape[1],
                 "n_classes": len(np.unique(y)),
                 "train_samples": len(X_train),
                 "test_samples": len(X_test)
-            },
-            "metrics": {
-                "accuracy": metrics['accuracy'],
-                "precision": metrics['precision'],
-                "recall": metrics['recall'],
-                "f1_score": metrics['f1_score'],
-                "cv_mean": cv_results['mean'],
-                "cv_std": cv_results['std']
-            },
-            "tree_info": {
-                "depth": model.get_depth(),
-                "n_leaves": model.get_n_leaves(),
-                "n_rules": len(rules)
             }
         }
         
-        # Append to experiment history
-        history = get_state("experiment_history", [])
-        history.append(experiment_data)
-        set_state("experiment_history", history)
+        experiment_id = save_experiment(
+            experiment_data_for_store,
+            algorithm_type="decision_tree"
+        )
         
-        logger.info(f"Saved experiment {experiment_id} to history")
+        logger.info(f"Saved experiment {experiment_id} to persistent storage")
         
         return {
             'model': model,

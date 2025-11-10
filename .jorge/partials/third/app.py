@@ -324,7 +324,7 @@ elif current_page == "K-means":
     kmeans_render()
 
 elif current_page == "History":
-    from ui.pages.history import render as history_render
+    from ui.pages.history.historial import render as history_render
     history_render()
 
 # Footer

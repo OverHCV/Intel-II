@@ -14,6 +14,7 @@ from sklearn.metrics import silhouette_score
 from .j4_analysis import find_optimal_k, get_silhouette_samples_per_cluster
 from .fisher_j4 import calculate_fisher_j4
 from states import get_state, set_state, StateKeys
+from versioning.experiment_store import save_experiment
 
 logger = logging.getLogger(__name__)
 
@@ -112,39 +113,30 @@ def train_hierarchical_clustering(
                 'size': int(np.sum(cluster_mask))
             }
         
-        # Save experiment to history
-        experiment_id = f"HC_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
-        experiment_data = {
-            "id": experiment_id,
-            "timestamp": datetime.datetime.now().isoformat(),
-            "algorithm": "Hierarchical Clustering",
-            "params": {
+        # Save experiment to persistent storage
+        experiment_data_for_store = {
+            "parameters": {
                 "n_clusters": n_clusters,
                 "linkage_method": params['linkage_method'],
                 "distance_metric": params['distance_metric']
             },
-            "data": {
-                "total_samples": len(X),
-                "n_features": X.shape[1]
-            },
             "metrics": {
                 "silhouette_avg": float(silhouette_avg),
                 "fisher_j4": float(fisher_j4),
-                "cluster_sizes": cluster_sizes
+                "n_clusters": n_clusters
             },
-            "j4_analysis": {
-                "optimal_k": j4_results['optimal_k'] if j4_results else None,
-                "optimal_score": j4_results['optimal_score'] if j4_results else None
-            } if j4_results else None
+            "dataset_info": {
+                "total_samples": len(X),
+                "n_features": X.shape[1]
+            }
         }
         
-        # Append to experiment history
-        history = get_state("experiment_history_hc", [])
-        history.append(experiment_data)
-        set_state("experiment_history_hc", history)
+        experiment_id = save_experiment(
+            experiment_data_for_store,
+            algorithm_type="hierarchical"
+        )
         
-        logger.info(f"Saved experiment {experiment_id} to history")
+        logger.info(f"Saved experiment {experiment_id} to persistent storage")
         
         # Store results in state
         set_state(StateKeys.HC_LABELS, labels)

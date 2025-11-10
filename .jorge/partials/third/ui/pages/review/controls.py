@@ -114,18 +114,17 @@ def render_controls() -> Dict[str, Any]:
     
     st.markdown("---")
     
-    # G1/G2 Inclusion Section (Optional - for experimentation)
-    st.subheader("📊 Notas Previas (G1/G2)")
-    st.caption("💡 G1 y G2 correlacionan fuertemente con G3. Por defecto se excluyen para predicción realista.")
+    # G1/G2 Inclusion (Optional features)
+    st.subheader("📝 Notas Previas")
     
-    col_g1, col_g2, col_g3 = st.columns(3)
+    col_g1, col_g2, col_feat = st.columns([1, 1, 1])
     
     with col_g1:
         include_g1 = st.checkbox(
             "Include G1", 
             value=st.session_state.get("include_g1", False),
             key="include_g1",
-            help="Nota del primer periodo. Útil para análisis experimental."
+            help="Primera nota del periodo"
         )
     
     with col_g2:
@@ -133,14 +132,12 @@ def render_controls() -> Dict[str, Any]:
             "Include G2", 
             value=st.session_state.get("include_g2", False),
             key="include_g2",
-            help="Nota del segundo periodo. Útil para análisis experimental."
+            help="Segunda nota del periodo"
         )
     
-    with col_g3:
-        if include_g1 or include_g2:
-            st.metric("📊 Features", f"{30 + int(include_g1) + int(include_g2)}", delta="G1/G2 incluidas")
-        else:
-            st.metric("✅ Features", "30", delta="Sin G1/G2")
+    with col_feat:
+        n_features = 30 + int(include_g1) + int(include_g2)
+        st.metric("Features", n_features)
     
     st.markdown("---")
     
