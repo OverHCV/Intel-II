@@ -27,15 +27,17 @@ def remove_leakage_features(
     """
     Remove features that cause data leakage.
     
+    CRITICAL: Removes G1, G2 (predict G3 trivially) and dataset_source (metadata, not a feature).
+    
     Args:
         df: Input dataframe
-        features_to_remove: List of column names to remove (defaults to G1, G2)
+        features_to_remove: List of column names to remove (defaults to G1, G2, dataset_source)
         
     Returns:
         DataFrame with features removed
     """
     if features_to_remove is None:
-        features_to_remove = ["G1", "G2"]
+        features_to_remove = ["G1", "G2", "dataset_source"]
     
     existing_features = [f for f in features_to_remove if f in df.columns]
     
@@ -136,6 +138,8 @@ def split_features_target(
     """
     Split dataframe into features (X) and target (y).
     
+    CRITICAL: Removes dataset_source (metadata) and G3 (if still present) to prevent leakage.
+    
     Args:
         df: DataFrame with features and target
         target_col: Name of target column
@@ -152,9 +156,16 @@ def split_features_target(
     X = df.drop(columns=[target_col])
     y = df[target_col]
     
-    # Remove dataset_source if present (metadata only)
+    # Remove metadata and leakage columns if present
+    cols_to_drop = []
     if "dataset_source" in X.columns:
-        X = X.drop(columns=["dataset_source"])
+        cols_to_drop.append("dataset_source")
+    if "G3" in X.columns:
+        cols_to_drop.append("G3")
+    
+    if cols_to_drop:
+        X = X.drop(columns=cols_to_drop)
+        logger.info(f"Dropped metadata/leakage columns from X: {cols_to_drop}")
     
     logger.info(f"Split into X: {X.shape} and y: {y.shape}")
     

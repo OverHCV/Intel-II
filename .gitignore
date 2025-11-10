@@ -201,3 +201,28 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+.streamlit/cache
+
+# ML Models & Experiments (local training artifacts)
+*.pkl
+*.h5
+*.hdf5
+*.joblib
+*.model
+*.pth
+*.pt
+*.onnx
+
+# Experiment tracking & data artifacts
+**/sandbox/
+**/experiments/
+**/checkpoints/
+**/logs/
+**/runs/
+**/outputs/
+**/mlruns/
+
+# Large datasets (should be downloaded separately)
+*.csv.gz
+*.parquet
+*.feather

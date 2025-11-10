@@ -6,8 +6,9 @@
   "files.exclude": {
     "**/.jairo/**": true,
     "**/.salda/**": true,
+    "**/**.lock": true,
+    "**/**/__pycache__/**": true,
     // ".venv/**": true,
-    // "**/**.ipynb": true,
-    // "**/**.lock": true,
+    // "**/**.ipynb": true
   }
 }
