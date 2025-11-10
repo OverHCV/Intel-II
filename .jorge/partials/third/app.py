@@ -107,13 +107,13 @@ with st.sidebar:
         st.info("⏳ Decision Tree pending")
     
     hc_done = get_state(StateKeys.HC_LABELS, None)
-    if hc_done:
+    if hc_done is not None:
         st.success("✅ Hierarchical done")
     else:
         st.info("⏳ Hierarchical pending")
     
     km_done = get_state(StateKeys.KM_LABELS, None)
-    if km_done:
+    if km_done is not None:
         st.success("✅ K-means done")
     else:
         st.info("⏳ K-means pending")
@@ -308,24 +308,24 @@ if current_page == "Home":
     # st.success("👆 **Usa la navegación ** para acceder a cada sección.")
 
 elif current_page == "Dataset Review":
-    from ui.pages.review import render as dataset_review_render
+    from ui.pages.review.dataset_review import render as dataset_review_render
     dataset_review_render()
 
 elif current_page == "Decision Trees":
-    from ui.pages import decision_tree
-    decision_tree.render()
+    from ui.pages.dtree.decision_tree import render as decision_tree_render
+    decision_tree_render()
 
 elif current_page == "Hierarchical":
-    from ui.pages import hierarchical
-    hierarchical.render()
+    from ui.pages.hierarchic.hierarchical import render as hierarchical_render
+    hierarchical_render()
 
 elif current_page == "K-means":
-    from ui.pages import kmeans
-    kmeans.render()
+    from ui.pages.kmean.kmeans import render as kmeans_render
+    kmeans_render()
 
 elif current_page == "History":
-    from ui.pages import history
-    history.render()
+    from ui.pages.history import render as history_render
+    history_render()
 
 # Footer
 st.markdown("---")
