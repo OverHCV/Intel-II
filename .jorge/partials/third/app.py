@@ -211,9 +211,9 @@ if current_page == "Home":
         col_page1, col_page2 = st.columns([1, 4])
         with col_page1:
             page_num = st.number_input(
-                "Página", 
-                min_value=1, 
-                max_value=total_pages, 
+                "Página",
+                min_value=1,
+                max_value=total_pages,
                 value=1,
                 step=1
             )
