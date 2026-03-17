@@ -1,119 +1,39 @@
-# Cybersecurity Incident Predictor
+# Proyecto Final - Sistemas Inteligentes II
 
-Advanced ensemble ML platform for predicting cybersecurity incidents before they occur. Built with modern Python stack and professional SOC-grade interface.
+**Profesor:** Jorge Alberto Jaramillo Garzón
+**Institución:** Universidad de Caldas
 
-![Dashboard Preview](https://img.shields.io/badge/Dashboard-Solara-blue)
-![Python](https://img.shields.io/badge/Python-3.10+-green)
-![ML](https://img.shields.io/badge/ML-Ensemble-orange)
+## Descripción General
 
-## 🚀 Quick Start
+Cada grupo deberá formular, implementar y analizar un experimento de aprendizaje profundo (basado en redes convolucionales o transformers) sobre un problema realista de clasificación, regresión o segmentación, usando un conjunto de datos adecuado.
 
-### Prerequisites
-- Python 3.10+
-- UV package manager
+El trabajo será evaluado a partir de la evidencia que aporten frente a los siguientes cinco criterios:
 
-### Installation
+---
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd cybersecurity-incident-predictor
+## Criterios de Evaluación
 
-# Install dependencies with UV
-uv sync
+### 1. Diseño del Experimento
 
-# Download Microsoft GUIDE dataset (see dataset_guide.md)
-# Extract to data/microsoft_guide/
+- Plantear una pregunta o hipótesis clara sobre el comportamiento del modelo (p. ej. "¿Mejora la precisión al usar data augmentation X?")
+- Seleccionar y justificar el dataset, las particiones (train/valid/test), las métricas de evaluación y, cuando sea pertinente, modelos base o de comparación
 
-# Run the dashboard
-uv run cybersec-dashboard
-```
+### 2. Desarrollo del Experimento
 
-The dashboard will be available at `http://localhost:8765`
+- Implementar de forma correcta y reproducible el pipeline de entrenamiento y validación (preprocesamiento, arquitectura, funciones de pérdida, optimizador, etc.)
+- Ejecutar los entrenamientos definidos en el diseño experimental, controlando hiperparámetros y registrando configuraciones y resultados (p. ej. en código, tablas o logs)
 
-## 📋 Project Documentation
+### 3. Análisis e Interpretación de los Datos y Resultados
 
-- **[Project Overview](./project_overview.md)** - Vision, objectives and competitive advantages
-- **[Dataset Guide](./dataset_guide.md)** - Microsoft GUIDE dataset details and setup
-- **[Architecture Design](./architecture_design.md)** - Technical design of ensemble models
-- **[Evaluation Metrics](./evaluation_metrics.md)** - Specialized metrics for incident prediction
+- Analizar los resultados numéricos (métricas, curvas de aprendizaje) y gráficos (confusion matrices, ejemplos bien/mal clasificados, visualizaciones de atención o filtros)
+- Comparar modelos/configuraciones y extraer explicaciones coherentes sobre por qué se obtienen esos resultados
 
-## 🏗️ Architecture
+### 4. Uso de Juicio de Ingeniería para Hacer Recomendaciones
 
-The platform uses a hybrid ensemble approach:
+- Discutir las implicaciones prácticas de los resultados (desempeño vs. costo computacional, complejidad del modelo, tiempo de entrenamiento, etc.)
+- Formular recomendaciones justificadas (qué configuración adoptar, qué mejoras futuras serían razonables, en qué condiciones usar o no el modelo)
 
-- **LSTM/GRU**: Temporal pattern recognition
-- **Graph Neural Networks**: Entity relationship modeling  
-- **XGBoost**: Alert pattern classification
-- **Transformers**: Evidence sequence analysis
-- **Meta-Ensemble**: Adaptive model combination
+### 5. Comunicación de los Resultados
 
-## 🎯 Key Features
-
-✅ **Real-time incident prediction** (1h, 4h, 24h horizons)  
-✅ **Professional SOC interface** with risk timeline  
-✅ **Adaptive ensemble** that learns optimal model weights  
-✅ **Multi-dataset support** (Microsoft GUIDE, CIC-IDS2017, UNSW-NB15)  
-✅ **Business-focused metrics** (cost-weighted, alert fatigue prevention)  
-✅ **Production-ready** with comprehensive testing
-
-## 🧪 Development
-
-```bash
-# Run tests
-uv run pytest
-
-# Code quality checks  
-uv run ruff check src/
-uv run mypy src/
-
-# Format code
-uv run black src/
-```
-
-## 📊 Performance
-
-Based on Microsoft GUIDE dataset:
-- **Prediction Accuracy**: 94.2% (4-hour horizon)
-- **Early Warning Score**: 0.89
-- **Cost-Weighted Recall**: 0.91
-- **Alert Fatigue Score**: 0.85
-
-## 🏢 Business Impact
-
-- **Prevents incidents** before they escalate
-- **Reduces MTTD** by predicting 4+ hours in advance  
-- **Optimizes analyst workload** with intelligent prioritization
-- **Scales across organizations** with adaptive learning
-
-## 📁 Project Structure
-
-```
-cybersecurity-incident-predictor/
-├── src/
-│   ├── dashboard/          # Solara interface
-│   ├── data_adapters/      # Dataset adapters
-│   ├── models/             # ML ensemble models
-│   ├── evaluation/         # Specialized metrics
-│   └── pipeline/           # Training/inference
-├── config/                 # Configuration files
-├── tests/                  # Comprehensive tests
-├── data/                   # Dataset storage
-└── docs/                   # Documentation
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙋‍♂️ Support
-
-For questions or support, please open an issue or contact the development team.
+- Presentar un informe escrito claro, estructurado y técnicamente correcto, con figuras y tablas legibles y debidamente referenciadas
+- Realizar una presentación oral o demo en la que el grupo comunique de manera efectiva el problema, la metodología, los resultados y las conclusiones

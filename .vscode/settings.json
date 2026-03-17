@@ -5,10 +5,10 @@
   // "python.defaultInterpreterPath": ".venv/bin/python",
   "files.exclude": {
     "**/.jairo/**": true,
-    "**/.salda/**": true,
+    //    "**/.salda/**": true,
     "**/**.lock": true,
-    "**/**/__pycache__/**": true,
+    "**/**/__pycache__/**": true
     // ".venv/**": true,
-    // "**/**.ipynb": true
+    //    "**/**.ipynb": true
   }
 }
