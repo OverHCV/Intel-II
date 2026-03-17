@@ -212,7 +212,6 @@ __marimo__/
 *.pth
 *.pt
 *.onnx
-**/*.png
 
 # Experiment tracking & data artifacts
 **/sandbox/
