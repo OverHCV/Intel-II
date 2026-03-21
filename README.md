@@ -45,10 +45,10 @@
 ```
 .jorge/
 ├── partials/                 # Partial Exams (50%)
-│   ├── zero/                # Demo exam (practice)
-│   ├── first/               # Bayesian & K-NN classifiers
-│   ├── second/              # SVM, ANN, PCA ⭐ COMPLETE
-│   └── third/               # TBD
+│   ├── zero/                 # Demo exam (practice)
+│   ├── first/                # Bayesian & K-NN classifiers
+│   ├── second/               # SVM, ANN, PCA ⭐ COMPLETE
+│   └── third/                # TBD
 │
 ├── project/                  # Final Project (50%)
 │   ├── Cybersecurity Incident Predictor
