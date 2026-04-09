@@ -1,4 +1,4 @@
-# Intelligent Systems II 🤖
+# Intelligent Systems II
 
 > **University of Caldas** course repository for **Intelligent Systems II**.  
 > Class taken with **Prof. Jorge Alberto Jaramillo Garzón**
