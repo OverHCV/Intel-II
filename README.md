@@ -137,7 +137,7 @@ Python | Streamlit | scikit-learn | pandas | matplotlib | seaborn | plotly
 
 ### **Third Exam** - TBD
 **Location**: `partials/third/`  
-**Status**: 🔜 Pending
+**Status**: ✅ **COMPLETE** (2.5/2.5 points)  
 
 ---
 
