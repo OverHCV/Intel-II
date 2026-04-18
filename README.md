@@ -139,7 +139,7 @@ Python | Streamlit | scikit-learn | pandas | matplotlib | seaborn | plotly
 **Location**: `partials/third/`  
 **Status**: ✅ **COMPLETE** (2.5/2.5 points)
 
----
+--- 
 
 ## 🚀 Final Project - Cybersecurity Incident Predictor
 
