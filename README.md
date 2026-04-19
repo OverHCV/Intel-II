@@ -1,6 +1,6 @@
 # Intelligent Systems II
 
-> **University of Caldas** course repository for **Intelligent Systems II**.  
+> **Caldas University** course repository for **Intelligent Systems II**.  
 > Class taken with **Prof. Jorge Alberto Jaramillo Garzón**
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org)
