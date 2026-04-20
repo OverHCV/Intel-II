@@ -62,7 +62,7 @@
 ---
 
 ## 📝 Partial Exams
-
+ 
 ### **Demo Exam (Zero)** - Practice Exercises
 **Location**: `partials/zero/`  
 **Topics**: Validation, Bayesian classifiers, K-NN  
