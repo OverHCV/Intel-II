@@ -58,11 +58,8 @@
     ├── Theory: Perceptron, SVM, Kernels, ANN
     └── Weekly notes
 ```
-
----
-
-## 📝 Partial Exams
  
+---
 ### **Demo Exam (Zero)** - Practice Exercises
 **Location**: `partials/zero/`  
 **Topics**: Validation, Bayesian classifiers, K-NN  
