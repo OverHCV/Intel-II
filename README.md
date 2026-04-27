@@ -58,7 +58,7 @@
     ├── Theory: Perceptron, SVM, Kernels, ANN
     └── Weekly notes
 ```
- 
+  
 ---
 ### **Demo Exam (Zero)** - Practice Exercises
 **Location**: `partials/zero/`  
