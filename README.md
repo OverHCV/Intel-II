@@ -41,7 +41,7 @@
 ---
 
 ## 📂 Repository Structure
- 
+
 ```
 .jorge/
 ├── partials/                 # Partial Exams (50%)
